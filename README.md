@@ -1,26 +1,15 @@
 <p align="center">
-  <img src="pulls_tracker_ui/assets/loading/banner.png" alt="AquariaWish logo: the letters AW above the text AQUARIA WISH" width="420">
+  <img src="pulls_tracker_ui/assets/loading/banner.png" alt="AquariaWish logo: the letters AW above the text AQUARIA WISH, in white on a dark blue background" width="420">
 </p>
 
 <h1 align="center">AquariaWish - Pulls Tracker</h1>
 
 <p align="center">
-  Desktop application that stores pull history (wishes, warps, signal searches) for Genshin Impact, Honkai: Star Rail and Zenless Zone Zero, and computes pity, guarantee state and statistics from it.<br/>
-  Unofficial fan project. It gives no advantage in the games.<br/>
-  Developed with Claude Sonnet 5.5, including this README. UI/UX and the logo banner designed by hand.<br/>
-  Account sync has only run against a simulated service, not against live game servers.
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.9+"/>
-  <img src="https://img.shields.io/badge/pywebview-6-555555?style=for-the-badge" alt="pywebview 6"/>
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
-  <img src="https://img.shields.io/badge/CSS-1572B6?style=for-the-badge" alt="CSS"/>
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
-  <img src="https://img.shields.io/badge/PyInstaller-2C2C2C?style=for-the-badge" alt="PyInstaller"/>
-  <img src="https://img.shields.io/badge/Platform-Windows-0078D4?style=for-the-badge" alt="Platform: Windows"/>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License: MIT"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/douglaslins/aquariawish_py" alt="license"/></a>
+  <img src="https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white" alt="Python 3.9 or newer"/>
+  <img src="https://img.shields.io/badge/built_with-pywebview-555555" alt="built with pywebview"/>
+  <img src="https://img.shields.io/badge/built_with-SQLite-003B57?logo=sqlite&logoColor=white" alt="built with SQLite"/>
+  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="platform Windows"/>
 </p>
 
 <p align="center">
@@ -28,24 +17,26 @@
   <sub><b>Plan a character goal.</b> Pick a tier, enter owned currency, read the pulls still needed.</sub>
 </p>
 
+Desktop application that stores pull history (wishes, warps, signal searches) for Genshin Impact, Honkai: Star Rail and Zenless Zone Zero, and computes pity, guarantee state and statistics from it.
+
+Unofficial fan project. Account sync has only run against a simulated service, not against live game servers ([details](docs/account-sync.md)).
+
+Developed with Claude Sonnet 5.5, including this README. UI/UX and the logo banner designed by hand.
+
 ## Features
 
-### Tracking
-- Stores pulls in a local SQLite database, keyed by game, UID and pull ID. Several accounts per game.
-- Syncs pull history from the game's history service.
-- Imports UIGF v4.x JSON and this program's CSV. Exports UIGF v4.0 JSON and CSV.
-- Backs up the database before a sync, an account removal and an import that replaces pulls. Keeps the newest 10.
+- **Track.** Stores pulls in a local SQLite database, keyed by game, UID and pull ID, for several accounts per game.
+- **Sync.** Reads pull history from the game's history service with the link the game saves on the computer.
+- **Import and export.** Imports UIGF v4.x JSON and this program's CSV. Exports UIGF v4.0 JSON and CSV.
+- **Back up.** Copies the database before a sync, an account removal and an import that replaces pulls. Keeps the newest 10.
+- **Pity and guarantee.** Computes pity, 50/50 or 75/25 guarantee state and the result of each 5-star from the stored pulls.
+- **Statistics.** Average, best and worst pity, luck grade, pity distribution, 50/50 and 75/25 record, spend.
+- **History.** Filters by banner, rarity, dates and name. Draws a 5-star timeline. Exports the filtered rows as CSV.
+- **Goals.** Calculates the worst-case pulls for a character goal, a weapon goal or both, from pity, guarantee, owned currency and tickets.
+- **Banners.** Shows current, upcoming and past banners with art from third-party services (see [Network access and APIs](#network-access-and-apis)).
 
-### Analysis
-- Computes pity, 50/50 or 75/25 guarantee state and the result of each 5-star from the stored pulls.
-- Stats: average, best and worst pity, luck grade, pity distribution, 50/50 and 75/25 record, spend.
-- History: filters by banner, rarity, dates and name, a 5-star timeline, CSV export of the filtered rows.
-
-### Planning
-- Calculates the worst-case pulls needed for a character goal, a weapon goal or both, from pity, guarantee, owned currency and tickets.
-- Shows current, upcoming and past banners with art, from third-party services (see [Network access and APIs](#network-access-and-apis)).
-
-## Screenshots
+<details>
+<summary>More screenshots</summary>
 
 Taken on a fresh install with no account synced, so pity counters are 0.
 
@@ -72,29 +63,34 @@ Taken on a fresh install with no account synced, so pity counters are 0.
   </tr>
 </table>
 
-## Install and use
+</details>
+
+## Install
+
+Requires Python 3.9 or newer, and Windows 10 or 11 with the Microsoft Edge WebView2 runtime (included in Windows 11 and in updated Windows 10).
 
 ```bash
 pip install -r requirements.txt
 python pulls_tracker.py
 ```
 
-Options:
-- `--debug` enables the developer tools of the window (F12).
-- `--perf` writes responsiveness measurements to `data/pulls_tracker.log`.
-- `--selfcheck` checks folders, interface files, modules and WebView2, writes `data/selfcheck.txt` and exits.
+`requirements.txt` installs pywebview 6 and, on Windows, `keyring`, which stores the optional HoYoLAB cookie in Windows Credential Manager.
 
-Requirements:
-- Python 3.9 or newer, with pywebview 6 (installed by `requirements.txt`).
-- Windows: Microsoft Edge WebView2 runtime (included in Windows 11 and current Windows 10). Linux and macOS: GTK or Qt, as pywebview requires.
+## Usage
 
-To sync:
+To sync pulls:
 
 1. Open each game, open its pull history page once (Wish, Warp or Signal Search history) and wait until it loads. The game saves a temporary history link on this computer. A link older than about a day is probably expired.
 2. In the program, click **Sync now**. For any game that shows "Not found" under Game folder, click **Change** and choose the game folder.
 3. Click **Scan and import**. After the first sync, **Sync now** syncs directly.
 
 Everything the program writes goes to `data/` next to the program. The environment variable `PULLS_TRACKER_DATA` sets another folder.
+
+Options of `pulls_tracker.py` and `AquariaWish.exe`:
+
+- `--debug` enables the developer tools of the window (F12).
+- `--perf` writes responsiveness measurements to `data/pulls_tracker.log`.
+- `--selfcheck` checks folders, interface files, modules and WebView2, writes `data/selfcheck.txt` and exits.
 
 ## Network access and APIs
 
@@ -127,11 +123,14 @@ build_exe.bat
 
 The script creates `.venv-build`, builds `dist/AquariaWish - Pulls Tracker/`, copies `README.txt`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.md` and `AquariaWish.exe.config` next to the program, and runs `--selfcheck`. `./build_exe.sh` makes the same build on Linux and macOS for testing. Details: [docs/packaging.md](docs/packaging.md).
 
-Run the tests with `python -m unittest discover -s tests`. `tests/test_ui_pages.py` needs Playwright and is skipped without it.
+```bash
+python -m unittest discover -s tests
+```
+
+`tests/test_ui_pages.py` needs Playwright and is skipped without it.
 
 ## Known limitations
 
-- Unconfirmed against a live account: response fields, log file locations and time zone offsets by UID prefix ([details](docs/account-sync.md)).
 - The UIGF v4.0 export has not been checked with the official validator.
 - The game folder search reads Windows paths under `%USERPROFILE%\AppData\LocalLow`. Elsewhere, set the game folder in Settings.
 - The pity of the first stored 5-star of a banner type is a lower bound (`≥`), because the servers keep a limited history.
