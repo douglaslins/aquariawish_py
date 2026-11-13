@@ -1,0 +1,1191 @@
+/* Pulls Tracker, start screen. Product register: neutral dark shell, accent from the active banner's element. */
+
+/* ---- Fonts -------------------------------------------------------------------------------------
+   Genshin : Philosopher Bold (SIL OFL, licenses/PHILOSOPHER-OFL.txt), Latin and Latin Extended subsets. A lookalike of the game's own font, not the game file.
+             One weight (700). The Genshin banner thickens it with a text stroke and enlarges it a little (see "Genshin banner font" below;
+             both values are in the manual-tweaks block of index.html).
+   Star Rail: D-DIN PRO (Datto, SIL OFL). The Star Rail UI is described as DIN-based; this is a lookalike, not the game file.
+   ZZZ      : Mona Sans variable (SIL OFL). Substitute for the game's Inpin Hongmeng (commercial, not available here).
+   To use a real game font later: add an @font-face for it and put its family name first in --f-hsr or --f-zzz. */
+@font-face { font-family: "PT Genshin"; src: url("../fonts/genshin-philosopher-700-latin.woff2") format("woff2"); font-weight: 700; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "PT Genshin"; src: url("../fonts/genshin-philosopher-700-latin-ext.woff2") format("woff2"); font-weight: 700; font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "PT DIN"; src: url("../fonts/hsr-ddin-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "PT DIN"; src: url("../fonts/hsr-ddin-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "PT DIN"; src: url("../fonts/hsr-ddin-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "PT DIN"; src: url("../fonts/hsr-ddin-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "PT Mona"; src: url("../fonts/zzz-mona-sans.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-display: swap; }
+
+:root {
+  --f-genshin: "PT Genshin", "Segoe UI", system-ui, sans-serif;
+  --f-hsr: "PT DIN", "Bahnschrift", "Segoe UI", system-ui, sans-serif;
+  --f-zzz: "PT Mona", "Segoe UI", system-ui, sans-serif;
+
+  color-scheme: dark;
+
+  /* neutrals, hue 265, chroma 0.012 to 0.018 */
+  --bg:        oklch(0.175 0.012 265);
+  --rail:      oklch(0.145 0.012 265);
+  --surface:   oklch(0.215 0.014 265);
+  --surface-2: oklch(0.255 0.015 265);
+  --line:      oklch(0.32 0.016 265);
+  --line-2:    oklch(0.44 0.018 265);
+  --ink:       oklch(0.95 0.006 265);
+  --ink-2:     oklch(0.82 0.010 265);
+  --ink-3:     oklch(0.72 0.012 265);
+  --icon:      oklch(0.88 0.008 265);   /* sidebar icons: light grey on dark */
+  --icon-hi:   oklch(0.98 0.004 265);
+  --ok:        oklch(0.82 0.15 155);
+  --warn:      oklch(0.82 0.13 80);
+
+  /* radius: subtle modern */
+  --r-sm: 6px; --r-md: 8px; --r-lg: 14px;
+
+  /* type, fixed rem scale (ratio about 1.18) */
+  --t-xs: 0.75rem; --t-sm: 0.8125rem; --t-md: 0.9375rem; --t-lg: 1.125rem; --t-xl: 1.375rem; --t-2xl: 1.75rem; --t-3xl: 2.25rem;
+
+  --top-h: 56px;
+  --tile: 70px;                      /* sidebar button, width and height */
+  --rail-w: calc(var(--tile) + 10px * 2);   /* one column of tiles plus side padding */
+
+  /* name plate (measured from the in-game wish banner: dark panel about 0.6 black, navy title bar, gold title text) */
+  --plate-dark:   oklch(0 0 0 / 0.6);
+  --plate-title:  #38425c;
+  --plate-title-edge: #2e394d;
+  --plate-title-ink:  #d3bc8e;
+  --art-scale: 1.5;                  /* Genshin character art (.art-wide), scaled from its center */
+
+  /* z-index scale */
+  --z-stage: 1; --z-chip: 2; --z-top: 10; --z-toast: 100;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);   /* ease-out-quint */
+}
+
+/* accent: hue and chroma come from the active element (js sets --ah and --ac on body).
+   Declared on body, not :root, so that var() resolves with the body's values. */
+body {
+  --accent:    oklch(0.78 var(--ac) var(--ah));
+  --on-accent: oklch(0.18 0.02 var(--ah));
+}
+/* Typography. The interface (everything outside .banner: top bar, rail, goal and result area, modals, toasts) always uses the Zenless Zone Zero
+   settings (Mona Sans, weights 500 and 800, width 106%), whichever game is selected. The banner (stage, name plates, combined display) keeps the
+   font of the selected game, so the name plates look as before: the game values are set again on .banner below. */
+body { --f: var(--f-zzz); --w-label: 500; --w-strong: 800; --stretch: 106%; }
+.banner { font-family: var(--f); font-stretch: var(--stretch); }
+body[data-game="genshin"] .banner { --f: var(--f-genshin); --w-label: 700; --w-strong: 700; --stretch: 100%; font-size-adjust: var(--genshin-size-adjust, 0.54); }
+/* Genshin banner font. Philosopher Bold is lighter and smaller than the game's font, so on the Genshin banner only:
+   - a text stroke in the text's own color thickens it (--genshin-stroke, 0.03em; em is read per element, so every text size gets the same proportion;
+     the stroke is set on each element, not inherited, because an inherited em would be fixed to the banner's own size);
+   - font-size-adjust (above, --genshin-size-adjust) enlarges it to the x-height of the original font.
+   The other games and the interface do not match this selector. */
+body[data-game="genshin"] .banner,
+body[data-game="genshin"] .banner *,
+body[data-game="genshin"] .banner *::before,
+body[data-game="genshin"] .banner *::after { -webkit-text-stroke-width: var(--genshin-stroke, 0.03em); }
+body[data-game="hsr"] .banner     { --f: var(--f-hsr);     --w-label: 500; --w-strong: 700; --stretch: 100%; }
+body[data-game="zzz"] .banner     { --f: var(--f-zzz);     --w-label: 500; --w-strong: 800; --stretch: 106%; }
+body[data-game="genshin"] { --ah: 250; --ac: 0.05; --icon-max: 300px; --star-h: 0.34em; }
+body[data-game="hsr"]     { --ah: 82;  --ac: 0.11; --icon-max: 170px; --star-h: 0.31em; }
+body[data-game="zzz"]     { --ah: 108; --ac: 0.15; --icon-max: 200px; --star-h: 0.4em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; }
+body {
+  margin: 0; height: 100%; min-height: 100dvh;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f); font-size: var(--t-md); line-height: 1.5; font-weight: 400; font-stretch: var(--stretch);
+  font-synthesis: none; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  display: grid; grid-template-rows: var(--top-h) 1fr;
+}
+button, select, input { font: inherit; color: inherit; font-stretch: inherit; }
+button { cursor: pointer; }
+img { display: block; }
+p, h1, fieldset, legend, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+[hidden] { display: none !important; }
+
+.ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.glyph { width: 28px; height: 28px; flex: none; fill: currentColor; stroke: none; }   /* flat filled glyphs (Phosphor Fill) */
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.skip-link { position: absolute; left: 8px; top: -60px; z-index: var(--z-toast); background: var(--surface-2); padding: 8px 14px; border-radius: var(--r-md); }
+.skip-link:focus { top: 8px; }
+
+/* ---- Top bar ------------------------------------------------------------------------------------ */
+.topbar {
+  position: relative; grid-row: 1; z-index: var(--z-top);
+  display: flex; align-items: stretch;
+  background: var(--rail); border-bottom: 1px solid var(--line);
+}
+.brand {
+  width: var(--rail-w); flex: none; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0;
+  background: none; border: 0; border-right: 1px solid var(--line);
+  color: var(--ink); font-size: var(--t-lg); font-weight: var(--w-strong); text-align: left;
+}
+.brand:hover .brand-mark { fill: var(--accent); }
+.brand-name { display: none; }   /* the rail is one tile wide: the mark alone sits above it */
+.brand-mark { width: 24px; height: 24px; fill: var(--icon); transition: fill 150ms var(--ease); }
+.tabs { display: flex; align-items: stretch; padding-left: 8px; min-width: 0; pointer-events: none; }   /* the gaps of this strip belong to the drag layer below it (see .drag) */
+.tabs .tab { pointer-events: auto; }
+.tab {
+  position: relative; display: flex; align-items: center; padding: 0 22px; min-height: 44px;
+  background: none; border: 0; color: var(--ink-3); font-size: var(--t-md); white-space: nowrap;
+  transition: color 150ms var(--ease);
+}
+.tab { font-family: var(--f-zzz); font-weight: 600; font-stretch: 106%; }   /* the three tabs use the Zenless style (it was one font per game) */
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); }
+.tab::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0;
+  background: var(--accent); transform: scaleX(0); transition: transform 200ms var(--ease);
+}
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
+.tab-short { display: none; }
+
+/* ---- Window controls (frameless pywebview window) ----------------------------------------------------------
+   js/window.js sets body[data-frameless] when the Python application runs the page (or with ?frameless=1) and builds the buttons.
+   .drag is the part of the bar that moves the window (class pywebview-drag-region). It is a layer that fills the whole top bar and lies
+   BEHIND the brand button, the tabs and the window buttons: a click on any empty part of the bar drags the window, a click on a button
+   does not (pywebview starts a drag for every element inside a drag region, so the buttons must not be inside it). A modal dialog blocks
+   everything outside it, so the same buttons are repeated inside each dialog (.winctl-float, fixed to the top right corner of the window). */
+.drag { position: absolute; inset: 0; z-index: 0; min-width: 0; }
+.topbar > .brand, .topbar > .tabs, .topbar > .winctl { position: relative; z-index: 1; }
+.topbar > .winctl { margin-left: auto; }
+.winctl { display: none; flex: none; align-items: stretch; }
+body[data-frameless] .winctl { display: flex; }
+.winctl-float { position: fixed; top: 0; right: 0; height: var(--top-h); z-index: var(--z-toast); }
+.wc {
+  display: grid; place-items: center; width: 46px; padding: 0; background: transparent; border: 0; border-radius: 0; color: var(--icon);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.wc .ico { width: 16px; height: 16px; }
+.wc:hover { background: var(--surface-2); color: var(--icon-hi); }
+.wc:active { background: var(--surface); }
+.winctl-float .wc:hover { background: oklch(1 0 0 / 0.12); }
+.wc-close:hover, .winctl-float .wc-close:hover { background: oklch(0.55 0.19 25); color: #fff; }
+.wc:focus-visible { outline-offset: -3px; }
+/* Resize handles (built by js/window.js): strips along the window edges and corners, above the page. */
+.rz { display: none; }
+body[data-frameless] .rz { display: block; }
+.rz-h { position: fixed; z-index: calc(var(--z-toast) + 1); touch-action: none; }
+.rz-n, .rz-s { left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.rz-e, .rz-w { top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.rz-n { top: 0; } .rz-s { bottom: 0; } .rz-e { right: 0; } .rz-w { left: 0; }
+.rz-ne, .rz-nw, .rz-se, .rz-sw { width: 8px; height: 8px; }
+.rz-ne { top: 0; right: 0; cursor: nesw-resize; } .rz-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.rz-nw { top: 0; left: 0; cursor: nwse-resize; } .rz-se { bottom: 0; right: 0; cursor: nwse-resize; }
+
+/* in the frameless window the dialogs keep out of the top bar strip, so they never cover the buttons */
+body[data-frameless] .modal { height: min(660px, calc(100dvh - 2 * var(--top-h))); }
+body[data-frameless] .modal-dlg { height: fit-content; max-height: calc(100dvh - 2 * var(--top-h)); }
+body[data-frameless] .dlg-box { max-height: calc(100dvh - 2 * var(--top-h) - 2px); }
+
+/* ---- Shell: rail + main -------------------------------------------------------------------------- */
+.shell { grid-row: 2; display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); min-height: 0; }
+.rail {
+  background: var(--rail); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+  padding: 10px; overflow-y: auto; min-height: 0;
+}
+
+/* sidebar buttons: 70 x 70, glyph above the name, same construction as the Genshin menu tiles */
+.nav-list { display: grid; grid-template-columns: var(--tile); gap: 4px; justify-content: center; }   /* always one column */
+.nav-btn {
+  width: var(--tile); height: var(--tile); display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 8px 3px 6px; background: oklch(0.2 0.013 265); border: 0; border-radius: 4px;
+  color: var(--icon);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.nav-btn:hover { background: var(--surface-2); color: var(--icon-hi); }
+.nav-btn:active { background: var(--surface); }
+.nav-btn .glyph { width: 26px; height: 26px; }
+.nav-label { font-size: 8pt; line-height: 1.15; text-align: center; text-wrap: balance; max-width: 100%; }
+
+.account { display: grid; grid-template-columns: var(--tile); gap: 4px; justify-content: center; }
+.btn-sync.is-attention { background: var(--accent); color: var(--on-accent); }
+.btn-sync.is-attention:hover { background: oklch(0.84 var(--ac) var(--ah)); color: var(--on-accent); }
+
+/* ---- Select (native, restyled) ------------------------------------------------------------------- */
+.select { position: relative; min-width: 0; }
+.select select {
+  width: 100%; min-height: 44px; appearance: none; -webkit-appearance: none;
+  padding: 0 40px 0 14px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--r-md);
+  color: var(--ink); font-weight: var(--w-label); text-overflow: ellipsis;
+  transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+}
+.select select:hover:not(:disabled) { border-color: var(--ink-3); }
+.select select:disabled { background: transparent; border-style: dashed; border-color: var(--line); color: var(--ink-3); cursor: not-allowed; }
+.select option { background: var(--surface-2); color: var(--ink); }
+.select-chev { position: absolute; right: 12px; top: 50%; translate: 0 -50%; pointer-events: none; color: var(--ink-2); }
+.select select:disabled + .select-chev { opacity: 0.4; }
+
+/* ---- Main ---------------------------------------------------------------------------------------- */
+main { grid-column: 2; overflow-y: auto; min-height: 0; padding: 24px 28px 32px; outline: none; }
+.main-col {
+  --stage-h: clamp(340px, calc(100dvh - var(--top-h) - 56px - 350px), 560px);
+  width: min(100%, calc(var(--stage-h) * 2)); margin-inline: auto; container-type: inline-size; container-name: main;
+}
+
+/* banner = stage (art, chips, arrows) + name plate floating over it */
+.banner { position: relative; }
+
+/* stage: the banner, always 2:1 like the wish banners it imitates */
+.stage {
+  position: relative; aspect-ratio: 2 / 1; border-radius: var(--r-lg); overflow: hidden; isolation: isolate;
+  background: var(--surface); border: 1px solid var(--line);
+}
+/* background and art live in one layer, so a banner change can slide the layer as a unit */
+.stage-layer { position: absolute; inset: 0; z-index: 0; }
+.stage-layer > img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage-ghost { pointer-events: none; }
+.stage-bg { object-fit: cover; object-position: left top; z-index: 0; }
+.stage-art { z-index: var(--z-stage); object-fit: contain; }
+.stage.is-changing .stage-bg, .stage.is-changing .stage-art { animation: stage-in 220ms var(--ease) both; }
+@keyframes stage-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* art placement by shape */
+.stage-art.art-wide   { object-fit: contain; scale: var(--art-scale); transform-origin: 50% 50%; }   /* Genshin: 2:1 art made for the background, enlarged around its center */
+.stage-art.art-square { inset: auto; height: 110%; width: auto; aspect-ratio: 1; left: 58%; top: -5%; translate: -50% 0; object-fit: contain; }
+/* Zenless Zone Zero upright art (a character-select portrait, wider than tall is art-bust): the character stands at the right, a little taller than the stage */
+.stage-art.art-tall   { inset: auto; left: var(--zzz-art-left, 50%); top: var(--zzz-art-top, -6%); translate: -50% 0; height: var(--zzz-art-height, 168%); width: auto; max-width: none; object-fit: contain; filter: drop-shadow(0 12px 18px oklch(0 0 0 / 0.35)); }
+.stage-art.art-bust   { object-fit: cover; object-position: 60% 20%; -webkit-mask-image: linear-gradient(to right, transparent 4%, #000 46%); mask-image: linear-gradient(to right, transparent 4%, #000 46%); }
+/* full-size weapon art (tall, transparent): same center as the icon, a little taller than the stage so the blade is not tiny inside the image's margins */
+.stage-art.art-weapon { inset: auto; left: 75%; top: 50%; translate: -50% -50%; height: 108%; width: auto; max-width: 46%; object-fit: contain; filter: drop-shadow(0 14px 20px oklch(0 0 0 / 0.4)); }
+/* Genshin weapon banner: the weapon sits in the ring of the supplied background (Epitome_Invocation.webp, ring centered at 58.8% across) */
+body[data-game="genshin"] .stage-art.art-weapon, body[data-game="genshin"] .stage-art.art-icon { left: 58.8%; top: 52%; }
+.stage-art.art-icon   { inset: auto; left: 68%; top: 50%; translate: -50% -50%; width: clamp(110px, 34cqw, var(--icon-max)); height: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 14px 20px oklch(0 0 0 / 0.4)); }
+
+/* placeholder backgrounds for games without supplied backgrounds (CSS only, replace later) */
+body[data-game="hsr"] .stage {
+  background:
+    radial-gradient(60% 90% at 60% 45%, oklch(0.42 calc(var(--ac) * 0.9) var(--ah) / 0.55), transparent 70%),
+    linear-gradient(160deg, oklch(0.22 0.04 270), oklch(0.15 0.03 280));
+}
+body[data-game="zzz"] .stage { background: oklch(0.14 0.01 265); }   /* the base image and the element effect are in the layer (.zzz-base) */
+
+.banner-chip {
+  position: absolute; z-index: var(--z-chip); left: 4cqw; top: 4cqw; padding: 5px 12px;
+  background: var(--accent); color: var(--on-accent); border-radius: var(--r-sm);
+  font-size: var(--t-sm); font-weight: var(--w-strong); letter-spacing: 0.01em;
+}
+.time-chip {
+  position: absolute; z-index: var(--z-chip); right: 14px; top: 14px; display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  background: oklch(0.15 0.012 265 / 0.9); border: 1px solid oklch(1 0 0 / 0.12); border-radius: var(--r-md);
+  font-size: var(--t-sm); color: var(--ink-2);
+}
+.time-chip .ico { width: 16px; height: 16px; color: var(--ink-3); }
+.time-value { font-weight: var(--w-strong); color: var(--ink); font-size: var(--t-md); }
+.nav-arrow {
+  position: absolute; z-index: var(--z-chip); top: 50%; translate: 0 -50%;
+  width: 48px; height: 48px; display: grid; place-items: center; padding: 0;
+  background: oklch(0.15 0.012 265 / 0.9); border: 1px solid oklch(1 0 0 / 0.16); border-radius: 50%; color: var(--icon);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 150ms var(--ease);
+}
+.nav-arrow.next { right: 14px; }
+.nav-arrow.prev { left: 14px; }
+.nav-arrow:hover { background: oklch(0.2 0.014 265); color: var(--icon-hi); }
+.nav-arrow:active { transform: scale(0.94); }
+.pager {
+  position: absolute; z-index: var(--z-chip); right: 14px; bottom: 14px; padding: 3px 10px;
+  background: oklch(0.15 0.012 265 / 0.9); border-radius: var(--r-sm); font-size: var(--t-xs); color: var(--ink-2);
+}
+.pager .tag { color: var(--warn); margin-left: 6px; }
+
+/* ---- Info band ----------------------------------------------------------------------------------- */
+.info { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px 40px; padding-top: 22px; align-items: start; }
+.field { display: grid; gap: 8px; }
+.phrase { color: var(--ink-2); font-size: var(--t-sm); }
+.selects { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 8px 10px; }
+.sel-field { display: grid; grid-template-rows: subgrid; grid-row: span 2; gap: 8px; min-width: 0; }
+.sel-field .phrase { align-self: end; }
+
+.owned { margin-top: 14px; min-width: 0; }
+.owned-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; margin-bottom: 8px; color: var(--ink-2); font-size: var(--t-sm); }
+.owned-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.own {
+  display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; column-gap: 8px; padding: 8px 10px; min-width: 0; min-height: 64px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  transition: border-color 150ms var(--ease);
+}
+.own.has-icon { grid-template-columns: 30px minmax(0, 1fr); }
+.own:focus-within { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
+.own-icon { grid-row: 1 / span 2; width: 30px; height: 30px; object-fit: contain; }
+.own-name { color: var(--ink-2); font-size: var(--t-xs); line-height: 1.2; overflow-wrap: break-word; }
+.own input {
+  width: 100%; min-width: 0; height: 32px; padding: 0; background: transparent; border: 0; border-bottom: 1px solid var(--line-2);
+  color: var(--ink); font-size: var(--t-lg); font-weight: var(--w-strong); border-radius: 0;
+}
+.own input:focus-visible { outline: none; border-bottom-color: var(--accent); }
+.own input::placeholder { color: var(--ink-3); }
+.owned-sum { color: var(--ink-2); font-size: var(--t-sm); }
+.owned-sum strong { color: var(--ink); font-weight: var(--w-strong); }
+
+.result { margin-top: 14px; display: grid; gap: 4px; padding-top: 14px; border-top: 1px solid var(--line); }
+.needed { font-size: var(--t-xl); font-weight: var(--w-strong); color: var(--accent); line-height: 1.25; }
+.needed-cur { font-size: var(--t-md); font-weight: var(--w-label); color: var(--ink-2); white-space: nowrap; }
+.needed.is-ok { color: var(--ok); }
+.total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; color: var(--ink-2); font-size: var(--t-md); }
+.total-num { font-size: var(--t-2xl); font-weight: var(--w-strong); color: var(--ink); line-height: 1.1; }
+.total-note { color: var(--ink-3); font-size: var(--t-xs); }
+
+/* pull ruler: the worst case drawn to scale; ticks every hard-pity block */
+.ruler {
+  --seg: 50%; --cover: 0%; --own: 0%;
+  position: relative; height: 12px; margin-top: 6px; border-radius: var(--r-sm); overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line-2);
+}
+.ruler-cover, .ruler-owned { position: absolute; top: 0; bottom: 0; }
+.ruler-cover { left: 0; width: var(--cover); background: repeating-linear-gradient(135deg, var(--line-2) 0 3px, transparent 3px 6px); }
+.ruler-owned { left: var(--cover); width: var(--own); background: var(--accent); }
+.ruler-tick { position: absolute; top: 0; bottom: 0; width: 2px; translate: -2px 0; background: var(--bg); pointer-events: none; }
+.ruler-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: var(--t-xs); color: var(--ink-3); }
+.ruler-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ruler-legend i { width: 14px; height: 8px; border-radius: 2px; border: 1px solid var(--line-2); }
+.ruler-legend .k-cover { background: repeating-linear-gradient(135deg, var(--line-2) 0 2px, transparent 2px 4px); }
+.ruler-legend .k-own { background: var(--accent); border-color: var(--accent); }
+.progress { min-width: 0; }
+.progress-cap { color: var(--ink-2); font-size: var(--t-sm); }
+.hint { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; color: var(--ink-3); font-size: var(--t-sm); line-height: 1.45; }
+.hint .ico { width: 16px; height: 16px; margin-top: 2px; }
+.hint button { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font-size: inherit; }
+
+/* ---- Name plate -----------------------------------------------------------------------------------
+   Floats over the banner like the in-game wish banner: the name with the element emblem on its left, a dark
+   panel that starts halfway down the name and holds the stars, and the description in a navy bar under it.
+   Proportions and colors were measured from the in-game plates (Escoffier, Kinich, Raiden Shogun, Mavuika).
+   Everything is sized from --F (the name size), so the plate scales as one piece. */
+.plate {
+  --F: calc(clamp(1.5rem, 4.8cqw, 3.1rem) * var(--fit, 1));
+  --ind: 1.45;                       /* name and stars start this many F from the plate's left edge */
+  --rl: 0.625;                       /* dark panel starts here (the center of the element emblem) */
+  position: absolute; z-index: var(--z-chip); left: max(var(--plate-x, 9%), 78px); bottom: 7%;   /* 78px keeps it clear of the previous-banner arrow */
+  width: max-content; min-width: min(100%, clamp(15rem, 36cqw, 22rem)); max-width: var(--plate-w, 58%);
+  display: grid; font-size: var(--F); line-height: 1.25; color: #fff; text-align: left;
+}
+.banner[data-art="art-wide"] .plate { --plate-x: 33%; --plate-w: 52%; }
+.plate.no-el { --ind: 0.5; --rl: 0; }
+
+.plate-card { position: relative; isolation: isolate; padding: 0 0.6em 0.2em 0; }
+.plate-card::before {
+  content: ""; position: absolute; z-index: -1; left: calc(var(--rl) * 1em); right: 0; top: 0.62em; bottom: 0;
+  background: var(--plate-dark);
+}
+.item-name {
+  display: flex; align-items: center; gap: 0.2em; min-width: 0; padding-left: calc(var(--ind) * 1em - 1.45em);
+  font-size: 1em; font-weight: var(--w-strong); line-height: 1.25; white-space: nowrap; color: #fff;
+  text-shadow: 0 0 1px oklch(0.4 0.01 265 / 0.9), 0 0.03em 0.08em oklch(0 0 0 / 0.55), 0 0 0.25em oklch(0 0 0 / 0.25);
+}
+.plate.no-el .item-name { padding-left: 0.5em; }
+.el-icon { width: 1.25em; height: 1.25em; object-fit: contain; flex: none; filter: drop-shadow(0 0 0.08em oklch(0 0 0 / 0.35)); }
+.stars { display: block; height: max(var(--star-h, 0.34em), 13px); width: auto; margin: 0.06em 0 0 calc(var(--ind) * 1em); }
+
+.desc-wrap {
+  --dF: clamp(0.8125rem, calc(var(--F) * 0.27), 1.0625rem);
+  --dl: calc(var(--F) * (var(--ind) - 0.3));          /* left margin: the text lines up with the name */
+  --dr: calc(var(--F) * 0.35);
+  box-sizing: border-box; width: 0; min-width: calc(100% - var(--dl) - var(--dr)); margin: 0 var(--dr) 0 var(--dl);
+  padding: calc(var(--dF) * 0.45) calc(var(--F) * 0.3 - 2px) calc(var(--dF) * 0.5);
+  background: var(--plate-title); border: 2px solid var(--plate-title-edge);
+  color: var(--plate-title-ink); font-size: var(--dF); line-height: 1.4;
+}
+.desc {
+  margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; text-wrap: pretty;
+}
+.desc-wrap.is-open .desc { -webkit-line-clamp: unset; line-clamp: unset; display: block; max-height: 12em; overflow-y: auto; }
+.more { display: block; margin-top: 0.35em; min-height: 24px; padding: 0; background: none; border: 0; color: var(--plate-title-ink); font-size: 0.92em; text-decoration: underline; text-underline-offset: 3px; }
+.more:hover { color: #fff; }
+
+.empty { padding: 64px 24px; text-align: center; color: var(--ink-2); display: grid; gap: 10px; justify-items: center; }
+.empty-title { font-size: var(--t-xl); font-weight: var(--w-strong); color: var(--ink); }
+.empty p { max-width: 52ch; }
+
+/* ---- Toast --------------------------------------------------------------------------------------- */
+.toasts { position: fixed; right: 20px; bottom: 20px; z-index: var(--z-toast); display: grid; gap: 8px; max-width: min(360px, calc(100vw - 40px)); }
+.toast {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-md); box-shadow: 0 10px 30px oklch(0 0 0 / 0.4); font-size: var(--t-sm); color: var(--ink);
+  animation: toast-in 220ms var(--ease) both;
+}
+.toast.is-leaving { animation: toast-out 160ms var(--ease) both; }
+@keyframes toast-in  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(6px); } }
+
+/* ---- Responsive ---------------------------------------------------------------------------------- */
+@container main (min-width: 641px) and (max-width: 780px) {
+  .desc { -webkit-line-clamp: 2; line-clamp: 2; }      /* small banner: shorter title bar */
+}
+@container main (max-width: 640px) {
+  .info { grid-template-columns: 1fr; row-gap: 18px; }
+  .time-chip .time-label { display: none; }
+  /* narrow: the plate leaves the banner and sits in the flow, overlapping the banner's lower edge */
+  .banner .plate {
+    --F: clamp(1.35rem, 7.2cqw, 2.1rem);
+    position: relative; left: auto; bottom: auto; width: auto; min-width: 0; max-width: 94%;
+    margin: calc(var(--F) * -0.9) 0 0 3%;
+  }
+  .item-name { white-space: normal; overflow-wrap: anywhere; }
+}
+@container main (max-width: 440px) {
+  .owned-fields { grid-template-columns: 1fr; }
+  .banner-chip { font-size: var(--t-xs); padding: 3px 8px; max-width: calc(100% - 128px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .time-chip { right: 8px; top: 8px; padding: 5px 9px; }
+  .nav-arrow { width: 40px; height: 40px; }
+  .nav-arrow.next { right: 8px; } .nav-arrow.prev { left: 8px; }
+  .pager { right: 8px; bottom: 8px; }
+}
+
+@media (max-width: 900px) {
+  .brand { padding: 0; justify-content: center; }
+  main { padding: 16px 16px 28px; }
+}
+@media (max-width: 640px) {   /* the tabs use the wider Zenless font: full names need about 605px */
+  .tab { padding: 0 12px; font-size: var(--t-sm); }
+  .tab-full { display: none; }
+  .tab-short { display: inline; }
+}
+@media (max-width: 560px) {
+  main { padding: 12px 12px 24px; }
+}
+
+@container main (max-width: 300px) {
+  .selects { grid-template-columns: 1fr; }
+  .nav-arrow { width: 32px; height: 32px; }
+  .time-chip { padding: 4px 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* narrow stage: keep the weapon art clear of the next arrow */
+@container main (max-width: 440px) { .stage-art.art-weapon { left: 64%; } body[data-game="genshin"] .stage-art.art-weapon { left: 58.8%; } }
+
+/* ---- Star Rail character banner ---------------------------------------------------------------------------
+   Built from the reference mock-ups (a 2006 x 1061 canvas): one base image drawn in code (light panel with its
+   lattice strip, black edge, tab, accent bar, top-right bracket) over a gradient layer chosen by the character's
+   element. Horizontal sizes are in cqw (1% of the banner width) and vertical places in % of the banner height.
+   The reference gradient is the Physical element; the other six keep its lightness and change the hue.
+   Layout is keyed to .stage-layer[data-layout] so the outgoing copy keeps its own look while it slides away. */
+.hsr-base { position: absolute; inset: 0; overflow: hidden; --g0: rgb(76 91 78); --g1: rgb(177 158 114); --g2: rgb(237 197 122); }
+/* the element layer behind the base image: a left-to-right ramp in three stops (the Physical stops are measured from the reference) */
+.hsr-base[data-element="Fire"]      { --g0: oklch(0.45 0.060 22);  --g1: oklch(0.70 0.110 38);  --g2: oklch(0.83 0.130 62); }
+.hsr-base[data-element="Ice"]       { --g0: oklch(0.45 0.045 245); --g1: oklch(0.71 0.075 228); --g2: oklch(0.85 0.080 205); }
+.hsr-base[data-element="Lightning"] { --g0: oklch(0.45 0.060 300); --g1: oklch(0.70 0.100 312); --g2: oklch(0.84 0.100 335); }
+.hsr-base[data-element="Wind"]      { --g0: oklch(0.45 0.050 185); --g1: oklch(0.71 0.090 168); --g2: oklch(0.85 0.110 150); }
+.hsr-base[data-element="Quantum"]   { --g0: oklch(0.45 0.060 275); --g1: oklch(0.70 0.090 275); --g2: oklch(0.84 0.080 290); }
+.hsr-base[data-element="Imaginary"] { --g0: oklch(0.46 0.050 120); --g1: oklch(0.74 0.110 100); --g2: oklch(0.87 0.140 95); }
+.hb-grad, .hb-grad::before, .hb-grad::after { position: absolute; inset: 0; }
+.hb-grad { background: linear-gradient(to right, var(--g0), var(--g1) 50%, var(--g2)); }
+.hb-grad::before, .hb-grad::after { content: ""; }
+/* shading that belongs to the base image, the same for every element: a navy top, weaker toward the right, and a blue tint at the bottom */
+.hb-grad::before {
+  background: linear-gradient(to bottom, rgb(0 16 38 / 0.725) 0%, rgb(0 16 38 / 0.655) 15%, rgb(0 16 38 / 0.536) 30%, rgb(0 16 38 / 0.316) 45%, rgb(0 16 38 / 0.142) 60%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to right, #000, rgb(0 0 0 / 0.91)); mask-image: linear-gradient(to right, #000, rgb(0 0 0 / 0.91));
+}
+.hb-grad::after { background: linear-gradient(to bottom, transparent 66%, rgb(0 99 148 / 0.052) 70%, rgb(0 99 148 / 0.166) 85%, rgb(0 99 148 / 0.256) 100%); }
+/* black edge: a strip down the panel's right side (to 65% of the height) and a block behind its rounded corner */
+.hb-edge {
+  position: absolute; left: 24.33%; width: 3.89%; top: 0%; height: 100%;
+  background: linear-gradient(#050707, #050707) right / 14% 100% no-repeat, linear-gradient(#050707, #050707) top / 100% 14.5% no-repeat;
+}
+.hb-panel {
+  position: absolute; left: 2.09%; width: 25.57%; top: 0.47%; bottom: 0; border-top-right-radius: 4cqw;
+  background: linear-gradient(90deg, #e3e3e5 0, #e5e6ea 12%, #e1e1e7 45%, #dcdde8 70%, #d7d9e9 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 47%, rgb(0 0 0 / 0.7) 70%, rgb(0 0 0 / 0.28) 90%, rgb(0 0 0 / 0.12) 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 47%, rgb(0 0 0 / 0.7) 70%, rgb(0 0 0 / 0.28) 90%, rgb(0 0 0 / 0.12) 100%);
+}
+.hb-rule { position: absolute; left: 0.97cqw; width: 0.15cqw; top: 0; bottom: 0; background: rgb(0 0 0 / 0.16); }
+.hb-lattice {
+  position: absolute; left: 1.02cqw; width: 4.61cqw; top: 0; bottom: 0; background-position: 0 0.997cqw; background-size: 2.243cqw 1.994cqw;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='45' height='40' viewBox='0 0 45 40'><path fill='%23000' fill-opacity='.12' d='M0 0 1 1.39 1.86 2.94 2.67 4.55 3.46 6.18 4.28 7.77 5.16 9.29 6.13 10.72 7.2 12.03 8.39 13.21 9.7 14.26 11.13 15.17 12.66 15.96 14.28 16.66 15.96 17.29 17.67 17.88 19.36 18.49 21 19.17 22.5 20 21.5 18.61 20.64 17.06 19.83 15.45 19.04 13.82 18.22 12.23 17.34 10.71 16.37 9.28 15.3 7.97 14.11 6.79 12.8 5.74 11.37 4.83 9.84 4.04 8.22 3.34 6.54 2.71 4.83 2.12 3.14 1.51 1.5 0.83ZM45 0 43.5 0.83 41.86 1.51 40.17 2.12 38.46 2.71 36.78 3.34 35.16 4.04 33.63 4.83 32.2 5.74 30.89 6.79 29.7 7.97 28.63 9.28 27.66 10.71 26.78 12.23 25.96 13.82 25.17 15.45 24.36 17.06 23.5 18.61 22.5 20 24 19.17 25.64 18.49 27.33 17.88 29.04 17.29 30.72 16.66 32.34 15.96 33.87 15.17 35.3 14.26 36.61 13.21 37.8 12.03 38.87 10.72 39.84 9.29 40.72 7.77 41.54 6.18 42.33 4.55 43.14 2.94 44 1.39ZM0 40 1.5 39.17 3.14 38.49 4.83 37.88 6.54 37.29 8.22 36.66 9.84 35.96 11.37 35.17 12.8 34.26 14.11 33.21 15.3 32.03 16.37 30.72 17.34 29.29 18.22 27.77 19.04 26.18 19.83 24.55 20.64 22.94 21.5 21.39 22.5 20 21 20.83 19.36 21.51 17.67 22.12 15.96 22.71 14.28 23.34 12.66 24.04 11.13 24.83 9.7 25.74 8.39 26.79 7.2 27.97 6.13 29.28 5.16 30.71 4.28 32.23 3.46 33.82 2.67 35.45 1.86 37.06 1 38.61ZM45 40 44 38.61 43.14 37.06 42.33 35.45 41.54 33.82 40.72 32.23 39.84 30.71 38.87 29.28 37.8 27.97 36.61 26.79 35.3 25.74 33.87 24.83 32.34 24.04 30.72 23.34 29.04 22.71 27.33 22.12 25.64 21.51 24 20.83 22.5 20 23.5 21.39 24.36 22.94 25.17 24.55 25.96 26.18 26.78 27.77 27.66 29.29 28.63 30.72 29.7 32.03 30.89 33.21 32.2 34.26 33.63 35.17 35.16 35.96 36.78 36.66 38.46 37.29 40.17 37.88 41.86 38.49 43.5 39.17Z'/></svg>");
+}
+.hb-bracket { position: absolute; left: 81.76%; top: 0; width: 18.24%; height: auto; aspect-ratio: 366 / 480; }
+.hb-bracket-body { fill: #181819; fill-opacity: 0.96; }
+.hb-dot { stroke: #5b5b5c; } .hb-dot-fill { fill: #6a6a6b; } .hb-bars { fill: #4a4a4b; fill-opacity: 0.7; }
+.hb-bar { position: absolute; left: 2.14%; width: 0.35cqw; top: 9.6%; height: 6.3%; background: #4a728e; }
+.hb-tab {
+  position: absolute; left: 0.3%; top: 2.73%; display: flex; align-items: center; box-sizing: border-box; width: 17.05cqw; height: 2.44cqw; padding-left: 1.4cqw;
+  border-radius: 0 99px 99px 0; background: #4a728e; color: #fff; font-size: 1.52cqw; font-weight: 500; letter-spacing: 0.02em; line-height: 1; white-space: nowrap;
+  box-shadow: 0.05cqw 0.1cqw 0.25cqw rgb(0 0 0 / 0.18);
+}
+/* Title and description are stacked in one box (.hb-text), so a title of any length pushes the description down instead of overlapping it.
+   The box starts to the right of the previous arrow (14 px + 48 px) when the banner is narrow. The description takes the space that is left
+   and scrolls when it does not fit (js/app.js fitHsrText shrinks its font first). */
+.hb-text { position: absolute; left: max(5.43%, 40px); width: calc(26.13% - max(5.43%, 66px)); top: 10.3%; bottom: 3%; display: flex; flex-direction: column; gap: 1.4cqw; min-height: 0; }
+.hb-title, .hb-desc { margin: 0; color: #000; }
+.hb-title { flex: none; font-size: 2.32cqw; font-weight: 700; line-height: 1.3; letter-spacing: 0; overflow-wrap: anywhere; }
+.hb-desc {
+  flex: 1 1 auto; min-height: 0; font-size: var(--fs, max(1.22cqw, 13px)); line-height: 1.38; color: rgb(0 0 0 / 0.88); text-wrap: pretty;
+  overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgb(0 0 0 / 0.3) transparent; padding-right: 2px;
+}
+.hsr-rank { display: none; }
+.hsr-flow { display: none; }
+
+/* character art: 122% of the stage height times --hsr-art-scale (index.html, <style id="manual-tweaks">), scaled around the art's center (66% across, 53% down) */
+.stage-layer[data-layout="hsr-char"] .stage-art.art-square { height: calc(122% * var(--hsr-art-scale, 1.5)); top: calc(49% - 61% * var(--hsr-art-scale, 1.5)); left: 58%; }
+
+/* Star Rail character banner, stacking order inside .stage-layer (lowest to highest):
+     1  .hb-grad       element gradient
+     2  .hb-edge       black strip beside the light panel
+     3  .stage-art     character art (in front of .hb-edge, behind everything below)
+     4  .hb-panel and the rest of the base image (bracket, accent bar, tab, title, description)
+   The name plate, time chip, arrows, pager and banner chip are outside .stage-layer and always sit above all of it.
+   This works because .hsr-base is not a stacking context (no z-index, opacity, transform, filter or mask), so its children
+   can be ordered against .stage-art, which is a sibling of .hsr-base. Do not add any of those properties to .hsr-base. */
+.hsr-base .hb-grad { z-index: 1; }
+.hsr-base .hb-edge { z-index: 2; }
+.stage-layer[data-layout="hsr-char"] .stage-art { z-index: 3; }
+.hsr-base .hb-panel, .hsr-base .hb-bracket, .hsr-base .hb-bar, .hsr-base .hb-tab, .hsr-base .hb-text { z-index: 4; }
+
+/* name plate: two black translucent rectangles, element emblem and name, then the stars */
+.banner[data-layout="hsr-char"] .plate {
+  --u: calc(max(1cqw, 9.5px) * var(--hsr-plate-scale, 1.5));   /* --hsr-plate-scale: index.html, <style id="manual-tweaks">; 1 = the size before v17 */
+  position: absolute; left: 40.2cqw; top: calc(50cqw * 0.653); bottom: auto; width: max-content; min-width: 0; max-width: none; margin: 0;
+  display: block; font-size: var(--u); line-height: 1;
+}
+.banner[data-layout="hsr-char"] .plate-card { display: grid; justify-items: start; padding: 0; }
+.banner[data-layout="hsr-char"] .plate-card::before { display: none; }
+.banner[data-layout="hsr-char"] .item-name {
+  box-sizing: border-box; height: calc(var(--u) * 1.63); min-width: calc(var(--u) * 7.67); gap: calc(var(--u) * 0.2); padding: 0 calc(var(--u) * 1.17) 0 calc(var(--u) * 0.19);
+  background: rgb(0 0 0 / 0.62); font-size: calc(var(--u) * 1.42); font-weight: 500; line-height: 1; color: #ececec; text-shadow: none;
+}
+.banner[data-layout="hsr-char"] .el-icon { width: calc(var(--u) * 1.88); height: calc(var(--u) * 1.88); margin: calc(var(--u) * -0.12) 0; filter: none; }
+.banner[data-layout="hsr-char"] .stars { display: none; }
+.banner[data-layout="hsr-char"] .hsr-rank {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: calc(var(--u) * 7.34); height: calc(var(--u) * 1.08);
+  margin-top: calc(var(--u) * 0.44); background: rgb(0 0 0 / 0.74);
+}
+.hsr-stars { width: calc(var(--u) * 4.6); height: auto; fill: #f9c46e; stroke: #ee9f45; stroke-width: 0.5; overflow: visible; }
+.banner[data-layout="hsr-char"] .desc-wrap { display: none; }
+
+/* narrow banner: the panel is too small for text, so the banner name and description go in a light card under it */
+.hsr-flow { margin-top: 10px; padding: 12px 14px 14px; background: #dcdde8; color: #000; border-radius: var(--r-md); }
+.hf-title { margin: 0 0 6px; font-size: 1.25rem; font-weight: 700; line-height: 1.25; }
+.hf-desc { margin: 0; font-size: var(--t-sm); line-height: 1.5; color: rgb(0 0 0 / 0.88); }
+@container main (max-width: 800px) {   /* under 800 px the text would have to be under 10 px: the card is used (it was 640 px before the previous arrow moved back to the middle) */
+  .stage-layer[data-layout="hsr-char"] .hb-text { display: none; }
+  .banner[data-layout="hsr-char"] .hsr-flow { display: block; }
+}
+@container main (max-width: 640px) {
+  .banner[data-layout="hsr-char"] .plate { position: absolute; margin: 0; max-width: none; }
+}
+@container main (max-width: 440px) { .banner[data-layout="hsr-char"] .plate { left: 29cqw; } }
+@container main (max-width: 300px) { .banner[data-layout="hsr-char"] .plate { --u: calc(max(1cqw, 6px) * var(--hsr-plate-scale, 1.5)); left: 8cqw; top: calc(50cqw * 0.653 + 3px); } }   /* no text on the panel here: the plate goes under the previous arrow, clear of the next arrow and the pager */
+
+/* ---- Star Rail light cone banner ----------------------------------------------------------------------------
+   From the four light cone references: a light base with the "Light Cone Event Warp" tab, the banner name in black at the
+   left, a tilted glass card with the light cone art at the right (the same art enlarged and faded behind it), the light cone
+   name in plain black text and a black translucent rectangle with the stars under it. The rectangle runs under the card.
+   --lu is 1cqw with a floor, so text stays readable on a small banner; positions stay in cqw. */
+.stage-layer[data-layout="hsr-lc"], .banner[data-layout="hsr-lc"] { --lu: max(1cqw, 5px); }
+.hsrlc-base { position: absolute; inset: 0; overflow: hidden; }
+.hl-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #f2f2f3, #e8e9eb); }
+.hl-ring { position: absolute; border-radius: 50%; border: 0.1cqw solid rgb(0 0 0 / 0.1); translate: -50% -50%; }
+.hl-ring-1 { left: 68%; top: 50%; width: 56cqw; height: 56cqw; }
+.hl-ring-2 { left: 76%; top: 50%; width: 48cqw; height: 48cqw; border-style: dashed; border-color: rgb(0 0 0 / 0.14); }
+.hl-bgart {
+  position: absolute; left: calc(93% - 24.4cqw); top: -22%; width: 48.8cqw; height: 150%; object-fit: cover; opacity: 0.95;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 45%); mask-image: linear-gradient(to right, transparent, #000 45%);
+}
+.hl-bar { position: absolute; left: 0; top: 24%; width: 0.55cqw; height: 6.6cqw; background: #4a797f; }
+.hl-lattice { left: 0.5cqw; top: 8%; opacity: 0.4; mask-image: linear-gradient(to bottom, transparent, #000 45%); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%); }
+.hl-tab {
+  position: absolute; left: 0; top: 8.8%; display: flex; align-items: center; box-sizing: border-box; width: calc(var(--lu) * 20.4); height: calc(var(--lu) * 3); padding-left: calc(var(--lu) * 1.5);
+  border-radius: 0 99px 99px 0; background: #4a797f; color: #fff; font-size: calc(var(--lu) * 1.75); font-weight: 500; letter-spacing: 0.02em; line-height: 1; white-space: nowrap;
+  box-shadow: 0.05cqw 0.1cqw 0.25cqw rgb(0 0 0 / 0.18);
+}
+.hl-title {
+  position: absolute; left: 3.4cqw; top: 25%; width: 36cqw; margin: 0; color: #000; font-size: calc(var(--lu) * 4.4); font-weight: 700; line-height: 1.25; letter-spacing: 0; overflow-wrap: anywhere;
+}
+/* the glass case and the sheen follow the card: same center, same tilt */
+.hl-glass, .hl-sheen { position: absolute; left: 77%; top: 50%; rotate: 5deg; pointer-events: none; }
+.hl-glass {
+  width: 33.6cqw; height: 49.4cqw; translate: calc(-50% - 1cqw) calc(-50% + 1cqw); box-sizing: border-box; border-radius: 0.3cqw;
+  border: 0.25cqw solid rgb(255 255 255 / 0.85); border-left-color: rgb(110 160 215 / 0.8); border-bottom-color: rgb(110 160 215 / 0.8);
+  background: rgb(255 255 255 / 0.22); box-shadow: 0 1cqw 3cqw rgb(0 0 0 / 0.12);
+}
+.hl-sheen {
+  z-index: calc(var(--z-stage) + 1); width: 29.9cqw; height: 46cqw; translate: -50% -50%;
+  background: linear-gradient(115deg, rgb(255 255 255 / 0.26) 0%, rgb(255 255 255 / 0) 38%), linear-gradient(to right, rgb(255 255 255 / 0.16), transparent 12%);
+}
+.hl-rank { position: absolute; left: 39.8cqw; top: 41.3cqw; display: flex; align-items: center; box-sizing: border-box; width: 24cqw; height: calc(var(--lu) * 3.1); padding-left: calc(var(--lu) * 1.5); background: rgb(0 0 0 / 0.84); }
+.hl-stars { width: calc(var(--lu) * 7.4); height: auto; fill: #f3d28f; overflow: visible; }
+
+/* three small tilted cards at the bottom left: the icons of the 4-star rate-up light cones of the banner (slide.rateUp, in the order of the list:
+   left, middle, right). The gradient is what shows while an icon loads, when it cannot be loaded, and on a banner without rate-up light cones.
+   The icon is a square picture of a tilted card, so it is enlarged a little and cropped to the portrait card. */
+.hl-stack { position: absolute; left: 3cqw; top: 26cqw; width: 30cqw; height: 23.5cqw; }
+.hl-mini {
+  position: absolute; display: block; overflow: hidden; width: 11cqw; height: 16.4cqw; box-sizing: border-box; border: 0.3cqw solid rgb(255 255 255 / 0.9); border-radius: 0.6cqw;
+  box-shadow: 0 0.6cqw 1.6cqw rgb(0 0 0 / 0.2), 0 0 0 0.2cqw rgb(150 165 190 / 0.35);
+}
+.hl-mini[hidden] { display: none; }
+.hl-mini img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; scale: var(--hl-mini-zoom, 1.4); }
+.hl-mini img[hidden] { display: none; }
+.hl-mini-1 { left: 8.5cqw; top: 0; rotate: -4deg; background: linear-gradient(160deg, #cdb98a, #8f7d6b 55%, #5e5f73); }
+.hl-mini-2 { left: 0; top: 4.6cqw; rotate: -9deg; background: linear-gradient(160deg, #7b78b8, #47508f 55%, #2c3560); }
+.hl-mini-3 { left: 14.6cqw; top: 6.4cqw; rotate: 8deg; background: linear-gradient(160deg, #4b4d63, #25262f 60%, #101015); }
+
+/* art: the card picture, tilted 5 degrees, with a white edge */
+.stage-layer[data-layout="hsr-lc"] .stage-art.art-weapon {
+  inset: auto; left: 77%; top: 50%; translate: -50% -50%; rotate: 5deg; width: 29.9cqw; height: auto; max-width: none; aspect-ratio: 0.65; object-fit: cover;
+  box-sizing: border-box; border: 0.35cqw solid #f2f2f2; filter: none; box-shadow: 0 1cqw 2.4cqw rgb(0 0 0 / 0.28);
+}
+.stage-layer[data-layout="hsr-lc"] .stage-art.art-icon { left: 77%; }
+
+/* light cone name: plain black text over the light base, the rank rectangle (in the layer) under it */
+.banner[data-layout="hsr-lc"] .plate {
+  position: absolute; left: 39.8cqw; top: auto; bottom: 9.9cqw; width: 21cqw; min-width: 0; max-width: 21cqw; margin: 0;
+  display: block; font-size: calc(var(--lu) * 2.3); line-height: 1.2; color: #0d0d0d;
+}
+.banner[data-layout="hsr-lc"] .plate-card { padding: 0; }
+.banner[data-layout="hsr-lc"] .plate-card::before { display: none; }
+.banner[data-layout="hsr-lc"] .item-name { display: block; padding: 0; white-space: normal; overflow-wrap: anywhere; font-size: 1em; font-weight: 600; line-height: 1.2; color: #0d0d0d; text-shadow: none; }
+.banner[data-layout="hsr-lc"] .stars, .banner[data-layout="hsr-lc"] .hsr-rank, .banner[data-layout="hsr-lc"] .desc-wrap { display: none; }
+@container main (max-width: 640px) { .banner[data-layout="hsr-lc"] .plate { position: absolute; margin: 0; max-width: 21cqw; } }
+/* narrow stage: the title gets a pixel floor and more width so it stays on one line, the decorative cards are dropped, the name keeps a readable size */
+@container main (max-width: 440px) {
+  .hl-title { width: 54cqw; font-size: max(4.4cqw, 15px); }
+  .hl-stack { display: none; }
+  .banner[data-layout="hsr-lc"] .plate { font-size: max(calc(var(--lu) * 2.3), 10px); }
+}
+@container main (max-width: 300px) {
+  .banner[data-layout="hsr-lc"] .plate { left: 33cqw; width: 30cqw; max-width: 30cqw; font-size: max(calc(var(--lu) * 2.3), 9px); }
+  .hl-rank { left: 33cqw; width: 30cqw; }
+}
+
+/* ---- Zenless Zone Zero banners (characters and W-Engines) ---------------------------------------------------
+   Base background: the supplied image (assets/zzz/Base_Background.webp). The element effect (glow in the element's hue, one
+   diagonal line and fine stripes) is drawn over it with the opacity --zzz-fx-opacity, set in index.html (<style id="manual-tweaks">).
+   Name plate, measured from the in-game screens and the Phoenix banner: a black rounded plate, a white rounded field with the
+   name (halftone dots fading in toward the bottom), the element icon centered in the black strip, and a yellow starburst with an
+   S on the top-left corner. Everything is in em of the name size, so the plate scales as one piece. The Path/specialty icon that
+   the references show next to the element icon has no supplied asset and is left out. */
+.zzz-base { position: absolute; inset: 0; overflow: hidden; background: oklch(0.14 0.01 265); }
+.zb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+.zb-fx {
+  position: absolute; inset: 0; opacity: var(--zzz-fx-opacity, 0.5);
+  background:
+    linear-gradient(115deg, transparent 0 55%, oklch(0.3 calc(var(--ac) * 0.7) var(--ah) / 0.5) 55% 56%, transparent 56% 100%),
+    repeating-linear-gradient(115deg, transparent 0 14px, oklch(1 0 0 / 0.025) 14px 15px),
+    radial-gradient(50% 80% at 70% 50%, oklch(0.36 calc(var(--ac) * 0.8) var(--ah) / 0.5), transparent 70%);
+}
+.zzz-badge { display: none; }
+
+.banner[data-layout="zzz"] .plate {
+  --zf: max(2.4cqw, 10.5px);
+  position: absolute; left: var(--zzz-plate-left, 52cqw); top: var(--zzz-plate-top, 36cqw); bottom: auto; margin: 0; width: max-content; min-width: 6em; max-width: 28cqw;
+  font-size: max(calc(var(--zf) * var(--fit, 1)), 9px); line-height: 1; display: block;
+  filter: drop-shadow(0 0.12em 0.22em rgb(0 0 0 / 0.38));
+}
+.banner[data-layout="zzz"] .plate-card {
+  position: relative; isolation: auto; box-sizing: border-box; padding: 0.16em 0.16em calc(0.16em + var(--strip, 0.88em)); background: #0a0a0a; border-radius: 0.32em;
+}
+.banner[data-layout="zzz"] .plate-card::before { display: none; }
+.banner[data-layout="zzz"] .plate.no-el { --strip: 0em; }
+.banner[data-layout="zzz"] .item-name {
+  display: block; box-sizing: border-box; min-height: 1.35em; margin: 0; padding: 0.04em 0.75em 0; border-radius: 0.26em;
+  font-size: 1em; font-weight: 900; font-stretch: 100%; line-height: 1.31; letter-spacing: 0; text-align: center; white-space: nowrap; color: #0a0a0a; text-shadow: none;
+  background:
+    linear-gradient(to bottom, #fff 30%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(circle at 25% 25%, rgb(0 0 0 / 0.17) 0 24%, transparent 28%) 0 0 / 0.12em 0.12em,
+    radial-gradient(circle at 75% 75%, rgb(0 0 0 / 0.17) 0 24%, transparent 28%) 0 0 / 0.12em 0.12em,
+    #fff;
+}
+.banner[data-layout="zzz"] .el-icon {
+  position: absolute; left: 50%; bottom: calc(var(--strip, 0.88em) / 2 + 0.16em - 0.4em); translate: -50% 0; width: 0.8em; height: 0.8em; margin: 0; filter: none;
+}
+.banner[data-layout="zzz"] .stars, .banner[data-layout="zzz"] .hsr-rank, .banner[data-layout="zzz"] .desc-wrap { display: none; }
+.banner[data-layout="zzz"] .zzz-badge { display: block; position: absolute; z-index: 2; left: 0; top: 0.32em; translate: -50% -50%; width: 1.5em; height: 1.5em; overflow: visible; }
+@container main (max-width: 640px) {
+  .banner[data-layout="zzz"] .plate { position: absolute; left: var(--zzz-plate-left, 52cqw); top: var(--zzz-plate-top, 36cqw); bottom: auto; margin: 0; width: max-content; max-width: 26cqw; }
+}
+@container main (max-width: 440px) {
+  /* narrow stage: the plate sits in the bottom row between the previous arrow and the pager, and a long name wraps onto a second line */
+  .banner[data-layout="zzz"] .plate { left: 33cqw; top: auto; bottom: 7cqw; max-width: 38cqw; }
+  .banner[data-layout="zzz"] .item-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; padding: 0.1em 0.75em 0.12em; }
+}
+
+/* ---- Settings modal: Settings, Sync, Import / Export, Data sources ------------------------------------ */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.modal {
+  width: min(940px, calc(100vw - 32px)); height: min(660px, calc(100dvh - 32px)); max-width: none; max-height: none; padding: 0; overflow: hidden;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line-2); border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px oklch(0 0 0 / 0.5);
+}
+.modal::backdrop { background: oklch(0.1 0.01 265 / 0.72); }
+.modal[open] { animation: modal-in 180ms var(--ease) backwards; }
+@keyframes modal-in { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+.modal-body { display: grid; grid-template-columns: 210px minmax(0, 1fr); height: 100%; }
+.modal-tabs { display: flex; flex-direction: column; gap: 4px; padding: 16px 10px; background: var(--rail); border-right: 1px solid var(--line); overflow-y: auto; }
+.mtab {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; background: transparent; border: 0; border-radius: 4px;
+  color: var(--icon); text-align: left; font-weight: var(--w-label);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.mtab .glyph { width: 22px; height: 22px; flex: none; }
+.mtab:hover { background: var(--surface); color: var(--icon-hi); }
+.mtab[aria-selected="true"] { background: var(--surface-2); color: var(--icon-hi); box-shadow: inset 3px 0 0 var(--accent); }
+.modal-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 14px 28px; border-bottom: 1px solid var(--line); }
+.modal-title { margin: 0; font-size: var(--t-xl); font-weight: var(--w-strong); letter-spacing: 0; }
+.modal-close { display: grid; place-items: center; width: 44px; height: 44px; background: transparent; border: 0; border-radius: 4px; color: var(--icon); }
+.modal-close:hover { background: var(--surface); color: var(--icon-hi); }
+.modal-close .ico { width: 22px; height: 22px; }
+.modal-panels { overflow-y: auto; min-height: 0; }
+.mpanel { padding: 8px 28px 28px; }
+.mpanel:focus-visible { outline-offset: -4px; }
+
+.set-group { padding-top: 18px; }
+.set-group h3 { margin: 0 0 4px; font-size: var(--t-xs); font-weight: var(--w-strong); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.set-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 6px 16px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.set-name { color: var(--ink-2); font-size: var(--t-sm); }
+.set-value { color: var(--ink); font-size: var(--t-sm); min-width: 0; overflow-wrap: anywhere; }
+.set-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-width: 0; }
+.set-inline label { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: var(--t-sm); }
+.set-note { margin: 10px 0 0; color: var(--ink-3); font-size: var(--t-xs); line-height: 1.5; max-width: 62ch; }
+.set-check { grid-template-columns: 22px minmax(0, 1fr); align-items: start; cursor: pointer; font-size: var(--t-sm); }
+.set-check input, .radio input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.radio { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+.set-fieldset { border: 0; border-bottom: 1px solid var(--line); margin: 0; min-width: 0; }
+.set-fieldset legend { float: left; width: 200px; padding: 0; }
+.set-ctl.select { max-width: 320px; }
+.set-ctl.select select { min-height: 40px; }
+.in {
+  width: 100%; min-height: 40px; padding: 0 12px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: var(--r-md); color: var(--ink);
+  transition: border-color 150ms var(--ease);
+}
+.in:hover:not(:disabled) { border-color: var(--ink-3); }
+.in:disabled { background: transparent; border-style: dashed; border-color: var(--line); color: var(--ink-3); cursor: not-allowed; }
+.in::placeholder { color: var(--ink-3); }
+.in-num { width: 76px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--line-2); border-radius: var(--r-md); font-weight: var(--w-label); white-space: nowrap; cursor: pointer;
+  transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+.btn:hover:not(:disabled) { border-color: var(--ink-3); background: var(--surface); }
+.btn:disabled { border-style: dashed; border-color: var(--line); color: var(--ink-3); background: transparent; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: var(--w-strong); }
+.btn-primary:hover:not(:disabled) { background: oklch(0.84 var(--ac) var(--ah)); border-color: transparent; }
+.panel-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 14px; }
+
+.card { display: grid; gap: 0; margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.card-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 6px 16px; padding: 11px 16px; font-size: var(--t-sm); }
+.card-row + .card-row { border-top: 1px solid var(--line); }
+.steps { list-style: none; margin: 18px 0 0; padding: 0; counter-reset: step; display: grid; gap: 0; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 0 8px; min-height: 48px; border-bottom: 1px solid var(--line); font-size: var(--t-sm); }
+.steps li::before { content: counter(step); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-2); color: var(--ink-2); font-size: var(--t-xs); }
+.step-state { color: var(--ink-3); }
+
+.table-wrap { overflow-x: auto; margin-top: 4px; }
+.dtable { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+.dtable th, .dtable td { padding: 9px 12px 9px 0; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.dtable th { color: var(--ink-3); font-size: var(--t-xs); font-weight: var(--w-strong); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.dtable td.dim { color: var(--ink-3); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: var(--t-xs); font-weight: var(--w-strong); border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.off { color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .modal { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+  .modal-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  /* the four tabs share the row (icon above label) so nothing needs horizontal scrolling; the close button has its own 52px column */
+  .modal-tabs { flex-direction: row; gap: 2px; padding: 8px 60px 8px 8px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; }
+  .mtab { flex: 1 1 0; min-width: 64px; flex-direction: column; justify-content: center; gap: 4px; min-height: 60px; padding: 6px 4px; text-align: center; font-size: var(--t-xs); line-height: 1.2; }
+  .mtab[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
+  .modal-main { grid-row: 2; }
+  #settingsModal .modal-head { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 52px; height: 77px; padding: 0; background: var(--rail); border-bottom: 1px solid var(--line); z-index: 2; }
+  #settingsModal .modal-head .modal-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .mpanel { padding: 4px 16px 24px; }
+  .set-row, .card-row { grid-template-columns: minmax(0, 1fr); }
+  .set-check { grid-template-columns: 22px minmax(0, 1fr); }
+  .set-fieldset legend { float: none; width: auto; margin-bottom: 6px; }
+  .set-ctl.select { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .modal[open] { animation: none; } }
+
+
+/* ---- Character + weapon display ---------------------------------------------------------------------------------
+   Both goal dropdowns on a value: one character banner and one weapon banner are shown together, drawn in code from the four Star Rail
+   "Event Warp" references (1024 x 576, here fitted to the 2:1 banner: vertical positions x 0.89, sizes x 0.9).
+   Measured on the references: character art centered at 32.5% across, its name plate under it (a pointed-end plate 25% wide, a dark tab with
+   the banner name above it, a dark fading strip with the element and the stars under it); the weapon card at 71.5% across, tilted 6 degrees,
+   in a glass case, its plate under it centered at 68%; round icons of the rate-up characters at the left, tilted cards of the rate-up
+   weapons at the right, the banner switcher at the top left, the title at the top center, a colored bar at the bottom.
+   (The side assets, the banner switcher and the rate-up icons, are left out: the display shows only the chosen character and the chosen weapon.)
+   Hand-editable: --combo-art-scale, --combo-art-x, --combo-card-scale (index.html, <style id="manual-tweaks">). */
+.banner[data-mode="combo"] .stage-layer, .banner[data-mode="combo"] .plate, .banner[data-mode="combo"] .hsr-flow,
+.banner[data-mode="combo"] .banner-chip, .banner[data-mode="combo"] .nav-arrow, .banner[data-mode="combo"] .pager { display: none; }
+.combo { position: absolute; inset: 0; z-index: var(--z-stage); overflow: hidden; color: #15171b; font-family: var(--f); --cx-art: var(--combo-art-x, 32.5cqw);
+  --pw: 24.5cqw; --bh: max(3.5cqw, 22px); --th: max(1.6cqw, 11px); --ph: max(2.1cqw, 14px); --ab: clamp(20px, 3.4cqw, 40px); --nf: max(1.32cqw, 7.5px); }
+.combo[hidden] { display: none; }
+.combo > * { position: absolute; }
+
+/* base: light blue-grey, a glow in the character's element color behind the character, fine vertical lines and two circles at the right, a bar at the bottom */
+.cb-base { inset: 0; background: linear-gradient(180deg, #f1f4f7, #dce4eb); }
+.cb-base > * { position: absolute; }
+.cb-glow { inset: 0; background:
+  radial-gradient(40cqw 31cqw at var(--cx-art) 24cqw, oklch(0.86 calc(var(--ac) * 1.15) var(--ah) / 0.75), transparent 72%),
+  radial-gradient(28cqw 24cqw at 72cqw 21cqw, oklch(0.95 0.015 230 / 0.9), transparent 72%); }
+.cb-ring { border-radius: 50%; border: 0.1cqw solid rgb(0 0 0 / 0.1); translate: -50% -50%; }
+.cb-ring-1 { left: 70cqw; top: 23cqw; width: 52cqw; height: 52cqw; }
+.cb-ring-2 { left: 72cqw; top: 23cqw; width: 43cqw; height: 43cqw; border-style: dashed; border-color: rgb(0 0 0 / 0.14); }
+.cb-bar { left: 0; right: 0; bottom: 0; height: 2.7cqw; background: linear-gradient(90deg, oklch(0.5 calc(var(--ac) * 0.8) var(--ah)), oklch(0.44 calc(var(--ac) * 0.8) calc(var(--ah) + 10))); }
+
+.cb-title { left: 50%; top: 1.6cqw; translate: -50% 0; z-index: 2; margin: 0; display: flex; align-items: center; gap: 1.6cqw;
+  font-size: max(2.7cqw, 14px); font-weight: var(--w-strong); line-height: 1; white-space: nowrap; color: #15171b; }
+.cb-title i { position: relative; width: 6cqw; height: 1px; background: #3b4048; }
+.cb-title i::after { content: ""; position: absolute; top: 50%; width: 0.45cqw; height: 0.45cqw; border-radius: 50%; background: #3b4048; translate: 0 -50%; }
+.cb-title i:first-child::after { left: -0.2cqw; } .cb-title i:last-child::after { right: -0.2cqw; }
+
+/* character art: its center on the same vertical line as the name plate; a fade at the right where the weapon card starts */
+.cb-char { inset: 0; z-index: 1; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, #000 55cqw, transparent 72cqw); mask-image: linear-gradient(to right, #000 55cqw, transparent 72cqw); }
+.cb-art { position: absolute; display: block; max-width: none; filter: drop-shadow(0 0.8cqw 1.2cqw rgb(0 0 0 / 0.22)); }
+.cb-art.art-wide   { height: calc(112% * var(--combo-art-scale, 1)); width: auto; left: var(--cx-art); top: 50%; translate: -50% -50%; }
+.cb-art.art-square { height: calc(112% * var(--combo-art-scale, 1)); width: auto; aspect-ratio: 1; left: var(--cx-art); top: 49%; translate: -50% -50%; }
+.cb-art.art-tall   { height: calc(118% * var(--combo-art-scale, 1)); width: auto; left: var(--cx-art); top: -4%; translate: -50% 0; }
+.cb-art.art-bust   { height: calc(66% * var(--combo-art-scale, 1)); width: auto; left: var(--cx-art); top: 47%; translate: -50% -50%; filter: none;   /* a wide crop (a bust): smaller, with soft edges */
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 52%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 52%, transparent 100%); }
+.cb-art.art-icon   { width: calc(26cqw * var(--combo-art-scale, 1)); height: auto; aspect-ratio: 1; left: var(--cx-art); top: 46%; translate: -50% -50%; object-fit: contain; }
+
+/* weapon card: tilted 6 degrees at (71.5, 23.3) of the banner, a glass case offset up and to the left, a light streak over it */
+.cb-wpn { left: 71.5cqw; top: 23.3cqw; width: 0; height: 0; z-index: 2; --cs: var(--combo-card-scale, 1); }
+.cb-wpn > * { position: absolute; left: 0; top: 0; rotate: 6deg; box-sizing: border-box; }
+.cb-glass { width: calc(20.6cqw * var(--cs)); aspect-ratio: 0.74; translate: calc(-50% - 1.2cqw * var(--cs)) calc(-50% - 0.5cqw * var(--cs)); border-radius: 0.9cqw;
+  border: max(0.2cqw, 1.5px) solid rgb(255 255 255 / 0.92); border-right-color: rgb(125 160 200 / 0.75); border-bottom-color: rgb(125 160 200 / 0.75);
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1)); box-shadow: 0 1cqw 2.4cqw rgb(0 0 0 / 0.12); }
+.cb-card { width: calc(19.3cqw * var(--cs)); aspect-ratio: 0.758; translate: -50% -50%; overflow: hidden; border: max(0.22cqw, 2px) solid #f6f6f6;
+  background: linear-gradient(160deg, oklch(0.93 0.03 var(--ah)), oklch(0.78 0.05 var(--ah))); box-shadow: 0 0.8cqw 1.8cqw rgb(0 0 0 / 0.28); }
+.cb-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cb-card.is-contain img { object-fit: contain; padding: 7%; box-sizing: border-box; filter: drop-shadow(0 0.8cqw 1cqw rgb(0 0 0 / 0.35)); }
+/* Genshin and Zenless Zone Zero: no glass case and no card, only the weapon art (upright, centered over its name plate); the Genshin weapon art is
+   --combo-genshin-weapon-scale times larger (index.html, manual-tweaks) */
+body:not([data-game="hsr"]) .cb-wpn { left: 68cqw; }
+body:not([data-game="hsr"]) .cb-wpn > * { rotate: 0deg; }
+body:not([data-game="hsr"]) :is(.cb-glass, .cb-sheen) { display: none; }
+body:not([data-game="hsr"]) .cb-card { overflow: visible; border: 0; background: none; box-shadow: none; }
+body[data-game="genshin"] .cb-card { width: calc(19.3cqw * var(--cs) * var(--combo-genshin-weapon-scale, 2)); }
+.cb-sheen { width: calc(18.4cqw * var(--cs)); aspect-ratio: 0.77; translate: -50% -50%; pointer-events: none;
+  background: linear-gradient(115deg, rgb(255 255 255 / 0.26) 0%, rgb(255 255 255 / 0) 36%), linear-gradient(to right, rgb(255 255 255 / 0.16), transparent 10%); }
+
+/* name plates: tab (banner name), plate with pointed ends (name), strip (element and stars); an arrow on each side of the plate */
+.cb-plate { z-index: 4; width: var(--pw); height: var(--bh); left: calc(var(--cx) - var(--pw) / 2); bottom: calc(7.2cqw + var(--ph) - 0.2cqw); }
+.cb-plate-c { --cx: var(--cx-art); }
+.cb-plate-w { --cx: 68cqw; }
+.cb-plate > * { position: absolute; }
+.cb-body { --cap: calc(var(--bh) * 0.5); inset: 0; z-index: 2; display: flex; align-items: center; box-sizing: border-box; padding: 0 calc(var(--cap) + 0.5cqw); isolation: isolate;
+  background: linear-gradient(#cfdadc, #b3c3c6 80%, #737b7e); clip-path: polygon(0 50%, var(--cap) 0, calc(100% - var(--cap)) 0, 100% 50%, calc(100% - var(--cap)) 100%, var(--cap) 100%); }
+.cb-body::before { content: ""; position: absolute; z-index: -1; inset: max(0.14cqw, 1.5px) max(0.1cqw, 1px); background: linear-gradient(180deg, #fff, #f8f9f8 55%, #eaf1f2);
+  clip-path: polygon(0 50%, calc(var(--cap) - 0.1cqw) 0, calc(100% - var(--cap) + 0.1cqw) 0, 100% 50%, calc(100% - var(--cap) + 0.1cqw) 100%, calc(var(--cap) - 0.1cqw) 100%); }
+.cb-cap { position: absolute; top: 50%; left: calc(var(--cap) * 0.28); height: 74%; width: auto; aspect-ratio: 24 / 40; translate: 0 -50%; stroke: #8dbcbc; fill: none; }
+.cb-cap.r { left: auto; right: calc(var(--cap) * 0.28); scale: -1 1; }
+.cb-line { position: relative; flex: 1 1 0; min-width: 0.6em; height: 1px; background: #a0a0a0; }
+.cb-line::before { content: ""; position: absolute; top: 50%; width: 0.22cqw; height: 0.22cqw; min-width: 2px; min-height: 2px; border-radius: 50%; background: #8a8a8a; translate: 0 -50%; }
+.cb-line:first-of-type::before { left: -0.1cqw; } .cb-line:last-of-type::before { right: -0.1cqw; }
+.cb-name { flex: 0 1 auto; min-width: 0; margin: 0 0.6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; color: #1c1c1e; line-height: 1.25;
+  font-size: calc(var(--nf) * var(--fit, 1)); font-weight: var(--w-strong); }
+.cb-tab { left: 50%; bottom: calc(100% - 0.3cqw); z-index: 1; translate: -50% 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 0.6em;
+  width: max-content; min-width: 50%; max-width: 96%; height: calc(var(--th) + 0.3cqw); padding: 0 0.9em 0.3cqw; background: #181617; color: #fff; font-size: max(0.98cqw, 6.5px); font-weight: var(--w-strong); line-height: 1;
+  clip-path: polygon(0 100%, 0 40%, 6% 0, 94% 0, 100% 40%, 100% 100%); }
+.cb-tab i { flex: none; width: 0.3em; height: 0.3em; border-radius: 50%; background: #8a8a8a; }
+.cb-tab-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cb-rank { left: 50%; top: calc(100% - 0.3cqw); z-index: 1; translate: -50% 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 0.5cqw;
+  width: 58%; height: var(--ph); padding-top: 0.3cqw;
+  background: linear-gradient(to right, transparent, rgb(12 12 14 / 0.93) 18%, rgb(12 12 14 / 0.93) 82%, transparent); }
+.cb-el { height: calc(var(--ph) * 0.82); width: auto; aspect-ratio: 1; object-fit: contain; flex: none; }
+.cb-el[hidden] { display: none; }
+.cb-stars { display: flex; align-items: center; height: calc(var(--ph) * 0.56); }
+.cb-stars svg { height: 100%; width: auto; fill: #f2dd9f; }
+.cb-stars .cb-s { height: 165%; aspect-ratio: 1; fill: initial; }
+.cb-stars img { height: 100%; width: auto; }
+
+.cb-arrow { top: calc(var(--bh) / 2); z-index: 3; translate: 0 -50%; display: grid; place-items: center; width: var(--ab); height: var(--ab); padding: 0;
+  background: oklch(0.15 0.012 265 / 0.9); border: 1px solid oklch(1 0 0 / 0.16); border-radius: 50%; color: var(--icon);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 150ms var(--ease); }
+.cb-arrow::after { content: ""; position: absolute; inset: -6px; }
+.cb-arrow .ico { width: 55%; height: 55%; }
+.cb-arrow[hidden] { display: none; }
+.cb-prev { right: calc(100% + max(0.5cqw, 4px)); }
+.cb-next { left: calc(100% + max(0.5cqw, 4px)); }
+.cb-arrow:hover { background: oklch(0.2 0.014 265); color: var(--icon-hi); }
+.cb-arrow:active { transform: scale(0.94); }
+
+/* Zenless Zone Zero: the Zenless base background with the element effect of the character (opacity --zzz-fx-opacity), and the Zenless name plate
+   (black plate, white name field with halftone dots, element icon in the strip, starburst S on the corner), as in the single banners. */
+.cb-zbase, .cb-zbadge { display: none; }
+body[data-game="zzz"] .cb-zbase { display: block; }
+body[data-game="zzz"] .cb-base { background: oklch(0.14 0.01 265); }
+body[data-game="zzz"] :is(.cb-glow, .cb-ring, .cb-bar) { display: none; }
+body[data-game="zzz"] .cb-title { color: #fff; }
+body[data-game="zzz"] .cb-title i, body[data-game="zzz"] .cb-title i::after { background: #fff; }
+body[data-game="zzz"] .combo { --zf: max(2.1cqw, 9px); }
+body[data-game="zzz"] .cb-plate { --strip: calc(var(--zf) * 0.88); width: max-content; min-width: calc(var(--zf) * 6); max-width: 26cqw; height: auto; left: var(--cx); translate: -50% 0;
+  top: 37.4cqw; bottom: auto; font-size: var(--zf); line-height: 1; }   /* both name fields on one line, whatever the strip below them */
+body[data-game="zzz"] .cb-plate.no-el { --strip: 0px; }
+body[data-game="zzz"] .cb-plate .cb-tab, body[data-game="zzz"] .cb-plate .cb-cap, body[data-game="zzz"] .cb-plate .cb-line, body[data-game="zzz"] .cb-plate .cb-stars { display: none; }
+body[data-game="zzz"] .cb-body { position: relative; inset: auto; display: block; height: auto; box-sizing: border-box; clip-path: none; border-radius: calc(var(--zf) * 0.32);
+  padding: calc(var(--zf) * 0.16) calc(var(--zf) * 0.16) calc(var(--zf) * 0.16 + var(--strip)); background: #0a0a0a; filter: drop-shadow(0 0.12em 0.22em rgb(0 0 0 / 0.38)); }
+body[data-game="zzz"] .cb-body::before { display: none; }
+body[data-game="zzz"] .cb-name { display: block; box-sizing: border-box; margin: 0; min-height: calc(var(--zf) * 1.35); padding: calc(var(--zf) * 0.04) calc(var(--zf) * 0.75) 0;
+  border-radius: calc(var(--zf) * 0.26); font-size: calc(var(--zf) * var(--fit, 1)); font-weight: 900; line-height: 1.31; color: #0a0a0a;
+  background:
+    linear-gradient(to bottom, #fff 30%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(circle at 25% 25%, rgb(0 0 0 / 0.17) 0 24%, transparent 28%) 0 0 / calc(var(--zf) * 0.12) calc(var(--zf) * 0.12),
+    radial-gradient(circle at 75% 75%, rgb(0 0 0 / 0.17) 0 24%, transparent 28%) 0 0 / calc(var(--zf) * 0.12) calc(var(--zf) * 0.12),
+    #fff; }
+body[data-game="zzz"] .cb-rank { left: 50%; top: auto; bottom: calc(var(--zf) * 0.16); translate: -50% 0; width: auto; height: var(--strip); padding: 0; background: none; z-index: 3; }
+body[data-game="zzz"] .cb-plate.no-el .cb-rank { display: none; }
+body[data-game="zzz"] .cb-el { height: calc(var(--zf) * 0.8); }
+body[data-game="zzz"] .cb-zbadge { display: block; position: absolute; z-index: 4; left: 0; top: calc(var(--zf) * 0.32); translate: -50% -50%; width: calc(var(--zf) * 1.5); height: calc(var(--zf) * 1.5); overflow: visible; }
+body[data-game="zzz"] .cb-arrow { top: calc(var(--zf) * 0.84); }
+body[data-game="zzz"] .cb-prev { right: calc(100% + var(--zf) * 0.95); }
+body[data-game="zzz"] .cb-next { left: calc(100% + var(--zf) * 0.3); }
+
+@container main (max-width: 640px) { .cb-line { display: none; } }
+@container main (max-width: 520px) { .cb-title { font-size: max(2.7cqw, 11px); } }
+@container main (max-width: 480px) { .cb-plate-c { --cx: 25cqw; } .cb-plate-w { --cx: 75cqw; } }   /* the four arrows need the room */
+@container main (max-width: 440px) { .cb-title { display: none; } .cb-tab { display: none; } }
+.cb-art[hidden], .cb-card img[hidden] { display: none; }
+
+/* ======================================================================================================
+   Screens: Dashboard, Banners, History, Stats (js/views.js), shared dialog, Settings panels (js/panels.js)
+   ====================================================================================================== */
+.dim { color: var(--ink-3); }
+.warn-t { color: var(--warn); }
+.nav-btn[aria-current="page"] { background: var(--surface-2); color: var(--icon-hi); box-shadow: inset 3px 0 0 var(--accent); }
+
+.view { width: min(100%, 1120px); margin-inline: auto; }
+.vroot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.vhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+.vtitle { margin: 0; font-size: var(--t-2xl); font-weight: var(--w-strong); line-height: 1.15; outline: none; }
+.vsub { color: var(--ink-3); font-size: var(--t-sm); }
+.vmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: var(--t-sm); color: var(--ink-2); }
+.meta-i strong { color: var(--ink); }
+.chip { display: inline-flex; align-items: center; max-width: 100%; padding: 2px 10px; overflow-wrap: anywhere; border: 1px solid var(--line-2); border-radius: 99px; font-size: var(--t-xs); color: var(--ink-2); }
+.chip-warn { color: var(--warn); border-color: currentColor; }
+.chip-sample { color: var(--accent); border-color: currentColor; }
+.vnote { display: flex; gap: 8px; align-items: flex-start; max-width: 84ch; color: var(--ink-3); font-size: var(--t-xs); line-height: 1.5; }
+.vnote .ico { width: 16px; height: 16px; margin-top: 2px; }
+.empty-card { display: grid; gap: 12px; justify-items: start; padding: 24px 26px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.empty-card h2 { margin: 0; font-size: var(--t-lg); }
+.empty-card p { max-width: 64ch; color: var(--ink-2); }
+.empty-line { padding: 18px 0; color: var(--ink-2); }
+
+/* pictures and chips of banner items */
+.pic { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.pic-s { width: 32px; height: 32px; }
+.pic.is-missing { border: 1px dashed var(--line-2); }
+.el-s { width: 18px; height: 18px; object-fit: contain; }
+.pb-items { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.pb-item { display: inline-flex; align-items: center; gap: 8px; font-weight: var(--w-label); }
+.live-left { color: var(--ink-3); font-size: var(--t-sm); }
+.live-left b { color: var(--ink); font-weight: var(--w-strong); }
+
+/* Dashboard */
+.pcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+.pcard { display: grid; gap: 12px; align-content: start; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.pcard-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.pcard h2 { margin: 0; font-size: var(--t-lg); font-weight: var(--w-strong); }
+.pnote { color: var(--ink-3); font-size: var(--t-xs); }
+.pbanners { display: grid; gap: 6px; }
+.prow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.plabel { width: 84px; flex: none; color: var(--ink-3); font-size: var(--t-sm); }
+.pnum { font-size: var(--t-2xl); font-weight: var(--w-strong); line-height: 1; }
+.pcap { color: var(--ink-3); }
+.pmeter { display: grid; gap: 5px; flex: 1 1 200px; min-width: 160px; }
+.pbar { --c: var(--ok); position: relative; height: 10px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 99px; }
+.pbar.lv-mid { --c: var(--warn); }
+.pbar.lv-high { --c: oklch(0.72 0.16 25); }
+.pbar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--c); }
+.pbar-soft { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink-2); }
+.pstate { color: var(--ink-3); font-size: var(--t-xs); }
+.prow-g .pg { display: grid; gap: 2px; flex: 1 1 240px; min-width: 0; }
+.pextra { color: var(--ink-3); font-size: var(--t-xs); }
+.pact { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 2px; }
+.nextcard { display: grid; gap: 8px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.nextcard h2 { margin: 0; font-size: var(--t-md); font-weight: var(--w-strong); }
+.nb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.nb-v { color: var(--ink-3); }
+.nb-none { color: var(--ink-2); }
+.sumbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+.sum-i { padding: 10px 14px; background: var(--surface); min-width: 0; }
+.sum-i dt { color: var(--ink-3); font-size: var(--t-xs); }
+.sum-i dd { margin: 2px 0 0; font-weight: var(--w-strong); overflow-wrap: anywhere; }
+
+/* Banners */
+.stabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.stab { min-height: 44px; padding: 0 18px; background: none; border: 0; color: var(--ink-3); font-weight: var(--w-label); transition: color 150ms var(--ease); }
+.stab:hover { color: var(--ink); }
+.stab[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); }
+.bpanel { outline: none; }
+.bcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; padding-top: 16px; }
+.bcard { position: relative; display: grid; gap: 10px; align-content: start; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); transition: border-color 150ms var(--ease); }
+.bcard:hover { border-color: var(--ink-3); }
+.bcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.bcard-title { margin: 0; font-size: var(--t-md); }
+.bcard-open { padding: 0; background: none; border: 0; color: var(--ink); font: inherit; font-weight: var(--w-strong); text-align: left; }
+.bcard-open::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-md); }
+.bcard-open:focus-visible { outline: none; }
+.bcard-open:focus-visible::after { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bver { margin-left: auto; color: var(--ink-3); font-size: var(--t-sm); }
+.bsub { color: var(--ink-2); font-size: var(--t-sm); }
+.bmeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; }
+.bmine { color: var(--ink-2); font-size: var(--t-sm); }
+.status { padding: 1px 8px; border: 1px solid currentColor; border-radius: 4px; font-size: var(--t-xs); font-weight: var(--w-strong); letter-spacing: 0.06em; }
+.st-live { color: var(--ok); }
+.st-soon { color: var(--warn); }
+.st-ended { color: var(--ink-3); }
+.link-btn { padding: 0; background: none; border: 0; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; text-align: left; }
+.link-btn:hover { color: var(--ink); }
+
+/* filters, tables, pager (History, Stats, Banners past) */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; padding: 4px 0; }
+.fld { display: grid; gap: 4px; color: var(--ink-3); font-size: var(--t-xs); }
+.fld .select select, .fld .in { min-height: 40px; min-width: 150px; }
+.fld .in[type=date] { min-width: 160px; }
+.fld-check { grid-auto-flow: column; justify-content: start; align-items: center; align-self: end; gap: 8px; min-height: 40px; color: var(--ink-2); font-size: var(--t-sm); }
+.fld-check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.fld-act { display: flex; gap: 8px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+.hist-wrap { border: 1px solid var(--line); border-radius: var(--r-md); }
+.hist th, .hist td { padding: 9px 12px; }
+.hist tr:last-child td { border-bottom: 0; }
+.hist .nm { font-weight: var(--w-label); }
+.hist tr.rar-5 { background: color-mix(in oklch, var(--accent) 8%, transparent); }
+.hist tr.rar-5 .nm { font-weight: var(--w-strong); }
+.sortbtn { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; }
+.sortbtn:hover { color: var(--ink); }
+.sort-ico { width: 14px; height: 14px; }
+.sort-ico.is-up { rotate: 180deg; }
+.res { display: inline-block; padding: 1px 8px; border: 1px solid currentColor; border-radius: 99px; font-size: var(--t-xs); font-weight: var(--w-strong); white-space: nowrap; }
+.res-won, .res-wonG { color: var(--ok); }
+.res-lost { color: oklch(0.74 0.14 25); }
+.pager-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.pr-count, .pr-page { color: var(--ink-2); font-size: var(--t-sm); }
+.pr-nav { display: flex; align-items: center; gap: 10px; }
+.pr-nav .btn { padding: 0 12px; }
+
+/* Stats */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 0; }
+.tile { padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.tile dt { color: var(--ink-3); font-size: var(--t-xs); }
+.tile dd { margin: 2px 0 0; font-size: var(--t-2xl); font-weight: var(--w-strong); line-height: 1.2; }
+.panel { display: grid; gap: 10px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.panel h2 { margin: 0; font-size: var(--t-md); font-weight: var(--w-strong); }
+.bars { display: grid; gap: 6px; list-style: none; }
+.bar-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) 34px; align-items: center; gap: 10px; font-size: var(--t-sm); }
+.bar-l { color: var(--ink-2); }
+.bar-t { height: 14px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.bar-f { display: block; height: 100%; background: var(--accent); }
+.bar-n { text-align: right; font-weight: var(--w-strong); }
+.flips { display: grid; gap: 4px; list-style: none; font-size: var(--t-sm); }
+
+/* shared dialog */
+.btn-danger { background: oklch(0.5 0.17 25); border-color: transparent; color: #fff; font-weight: var(--w-strong); }
+.btn-danger:hover:not(:disabled) { background: oklch(0.56 0.18 25); border-color: transparent; }
+.btn-danger-o { color: oklch(0.8 0.1 25); border-color: oklch(0.5 0.1 25); }
+.btn-s { min-height: 32px; padding: 0 12px; }
+.modal-dlg { width: min(520px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 32px); }
+.modal-dlg[data-size="md"] { width: min(720px, calc(100vw - 32px)); }
+.dlg-box { display: flex; flex-direction: column; max-height: calc(100dvh - 34px); }
+.dlg-box > .modal-head, .dlg-box > .dlg-foot { flex: none; }
+.modal-dlg .modal-head { padding-left: 24px; }
+.dlg-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 18px 24px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; }
+.dlg-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--line); }
+.dlg-text { color: var(--ink); max-width: 62ch; }
+.dlg-note { display: flex; gap: 8px; align-items: flex-start; color: var(--ink-3); font-size: var(--t-xs); line-height: 1.5; }
+.dlg-note .ico { width: 16px; height: 16px; margin-top: 2px; }
+.err { display: grid; gap: 12px; }
+.err-steps { margin: 0; padding-left: 22px; display: grid; gap: 4px; color: var(--ink-2); font-size: var(--t-sm); }
+.bdet { display: grid; gap: 14px; }
+.bdet-dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: var(--t-sm); }
+.bdet-dl dt { color: var(--ink-3); padding-top: 4px; }
+.bdet-dl dd { margin: 0; min-width: 0; }
+.bdet-mine { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); justify-items: start; }
+.bdet-mine h3 { margin: 0; font-size: var(--t-xs); font-weight: var(--w-strong); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.dtable-s { width: 100%; }
+.pool { display: grid; gap: 8px; }
+.pool-i { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--ink-3); }
+
+/* Settings panels */
+.panel-foot { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin: 18px -28px -28px; padding: 12px 28px; background: var(--bg); border-top: 1px solid var(--line); }
+.form-err { margin: 0 auto 0 0; color: var(--warn); font-size: var(--t-xs); max-width: 60ch; }
+.set-inline-fill { flex-wrap: nowrap; }
+.set-inline-fill .in { flex: 1 1 200px; min-width: 0; }
+.in-nick { width: 170px; min-height: 36px; }
+.set-checks { grid-template-columns: minmax(0, 1fr); }
+.acct-row .set-inline { gap: 8px 12px; flex-wrap: nowrap; }
+.acct-row .in-nick { width: 128px; }
+.acct-row .pill { white-space: nowrap; }
+.fr-lead { margin-top: 16px; font-size: var(--t-lg); font-weight: var(--w-strong); }
+.fr-steps { display: grid; gap: 16px; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: fr; }
+.fr-steps > li { counter-increment: fr; display: grid; gap: 8px; padding-left: 40px; position: relative; font-size: var(--t-sm); }
+.fr-steps > li::before { content: counter(fr); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line-2); border-radius: 50%; color: var(--ink-2); font-size: var(--t-xs); }
+.fr-steps h3 { margin: 0; font-size: var(--t-md); font-weight: var(--w-strong); }
+.fr-folder { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; }
+.fr-link { margin-top: 16px; }
+.run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.run-head h3 { margin: 0; font-size: var(--t-lg); font-weight: var(--w-strong); }
+.steps li.st-ok .step-state { color: var(--ok); }
+.steps li.st-failed .step-state { color: var(--warn); }
+.steps li.st-running .step-state { color: var(--ink); }
+.fetch { display: grid; gap: 8px; margin: 12px 0 0 44px; padding: 0; list-style: none; font-size: var(--t-sm); }
+.fetch-row { display: grid; grid-template-columns: 160px minmax(80px, 1fr) minmax(110px, auto); align-items: center; gap: 12px; }
+.fbar { display: block; height: 8px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 99px; overflow: hidden; }
+.fbar > span { display: block; height: 100%; background: var(--accent); transition: width 300ms var(--ease); }
+.err-box { display: grid; gap: 10px; margin-top: 18px; padding: 14px 16px; background: var(--surface); border: 1px solid oklch(0.5 0.1 80); border-radius: var(--r-md); }
+.err-box h4 { margin: 0; color: var(--warn); font-size: var(--t-md); }
+.err-box .panel-actions { padding-top: 4px; flex-wrap: wrap; }
+
+@media (max-width: 720px) {
+  .modal-dlg { width: calc(100vw - 16px); height: fit-content; max-height: calc(100dvh - 16px); border: 1px solid var(--line-2); border-radius: var(--r-lg); }
+  .modal-dlg[data-size="md"] { width: calc(100vw - 16px); }
+  .dlg-box { max-height: calc(100dvh - 18px); }
+  .dlg-body { padding: 14px 16px; }
+  .dlg-foot { padding: 12px 16px; }
+  .panel-foot { margin: 16px -16px -24px; padding: 12px 16px; }
+  .bdet-dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .bdet-dl dd { margin-bottom: 8px; }
+  .fr-folder { grid-template-columns: minmax(0, 1fr) auto; }
+  .fr-folder .dim { grid-column: 1 / -1; grid-row: 2; }
+  .fetch { margin-left: 0; }
+  .fetch-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .fetch-row .fbar { grid-column: 1 / -1; grid-row: 2; }
+  .set-inline-fill { flex-wrap: wrap; }
+}
+@media (max-width: 560px) {
+  .stab { flex: 1 1 0; padding: 0 6px; text-align: center; }
+  .vtitle { font-size: var(--t-xl); }
+  .plabel { width: 100%; }
+  .fld, .fld .select, .fld .in { width: 100%; }
+  .fld-act { width: 100%; }
+}
+.nextcard .chip { justify-self: start; }
+
+.acct-uid { display: block; color: var(--ink-3); font-size: var(--t-xs); }
+@media (max-width: 380px) {
+  .stab { padding: 0 2px; font-size: var(--t-sm); }
+}
+
+/* History: the 5-star timeline */
+.tl-card { display: grid; gap: 4px; padding: 10px 14px 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 14px; color: var(--ink-2); font-size: var(--t-sm); }
+.tl-head strong { color: var(--ink); }
+.tl-head span { color: var(--ink-3); font-size: var(--t-xs); }
+.tl-svg { display: block; width: 100%; height: auto; }
+.tl-axis { stroke: var(--line-2); stroke-width: 1; }
+.tl-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
+.tl-txt { fill: var(--ink-3); font-size: 11px; }
+.tl-dot { --c: var(--ok); fill: var(--c); fill-opacity: 0.85; stroke: var(--c); stroke-width: 2; }
+.tl-dot.tl-mid { --c: var(--warn); }
+.tl-dot.tl-high { --c: oklch(0.72 0.16 25); }
+.tl-dot.is-lb { fill-opacity: 0; }
+.tl-ring { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.meta-acct { display: inline-flex; align-items: center; gap: 6px; }
+.meta-acct .select { min-width: 0; }

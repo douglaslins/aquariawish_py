@@ -1,0 +1,4 @@
+# pt/window.py and pt/winpatch.py use pywebview 6 internals (BrowserView.instances, the EdgeChrome handlers): a new major version has to be checked first.
+pywebview>=6.0,<7
+# Optional: stores the HoYoLAB cookie (Settings > Data sources) in the Windows Credential Manager. Without it the program runs and does not store the cookie.
+keyring>=24; sys_platform == "win32"

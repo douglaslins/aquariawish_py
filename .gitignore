@@ -1,0 +1,16 @@
+# Build output and build environment
+/dist/
+/build/
+/.venv-build/
+/.venv/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Everything the program writes while it runs: pulls and UID (pulls.sqlite), settings, backups, the log, browser storage, downloaded art
+/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log

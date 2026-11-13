@@ -1,0 +1,2 @@
+# Only to build the .exe (python -m pip install -r requirements.txt -r requirements-build.txt)
+pyinstaller>=6.10

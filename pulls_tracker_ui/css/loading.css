@@ -1,0 +1,41 @@
+/* Loading panel. Colors and font are the ones of css/app.css (same tokens); the interface font is Mona Sans (the Zenless style). */
+@font-face { font-family: "PT Mona"; src: url("../fonts/zzz-mona-sans.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-display: swap; }
+
+:root {
+  color-scheme: dark;
+  --f: "PT Mona", "Segoe UI", system-ui, sans-serif;
+  --rail:      oklch(0.145 0.012 265);
+  --bg:        oklch(0.175 0.012 265);
+  --surface:   oklch(0.215 0.014 265);
+  --surface-2: oklch(0.255 0.015 265);
+  --ink:       oklch(0.95 0.006 265);
+  --ink-2:     oklch(0.82 0.010 265);
+  --accent:    oklch(0.80 0.07 215);       /* the progress ring; edit here */
+
+  --side: 230px;          /* square with the donut */
+  --banner-w: 573px;      /* area for the banner image */
+  --h: 230px;
+  --donut: 135px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; width: calc(var(--side) + var(--banner-w)); height: var(--h); overflow: hidden; background: var(--rail); }
+body {
+  color: var(--ink); font-family: var(--f); font-weight: 500; font-stretch: 106%; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; user-select: none; cursor: default;
+}
+
+.lp { display: grid; grid-template-columns: var(--side) var(--banner-w); width: calc(var(--side) + var(--banner-w)); height: var(--h); }
+
+.lp-side { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 15px 14px 0; background: var(--bg); min-width: 0; }
+.lp-donut { position: relative; flex: none; width: var(--donut); height: var(--donut); }
+.lp-donut svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.lp-track { fill: none; stroke: var(--surface-2); stroke-width: 8; }
+.lp-bar { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: butt; stroke-dasharray: 0 100; transition: stroke-dasharray 450ms var(--ease); }
+.lp-pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.75rem; font-weight: 800; letter-spacing: 0; }
+.lp-label { margin: 0; width: 100%; text-align: center; font-size: 0.6rem; line-height: 1.35; color: var(--ink-2); overflow-wrap: anywhere; text-wrap: balance; }
+
+.lp-banner { background: var(--surface); border-left: 1px solid var(--surface-2); }
+
+@media (prefers-reduced-motion: reduce) { .lp-bar { transition: none; } }

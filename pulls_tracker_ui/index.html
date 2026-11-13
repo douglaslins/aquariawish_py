@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulls Tracker</title>
+<meta name="color-scheme" content="dark">
+<!--
+  PULLS TRACKER, start screen (Main screen S0 plus the shell).
+
+  WHAT THIS FILE IS
+  - The page of the application window. The screens are drawn by js/app.js (main screen), js/views.js and js/panels.js.
+    All data comes from window.PT_API (js/api.js): the Python application when the address has #backend=1, otherwise
+    made-up sample data for a preview in a browser.
+  - The page itself reads no server. Banner data and art are js/banners.js (a snapshot shipped with the interface) or,
+    in the application, the files of its data folder (#data=...). A missing picture may be loaded from its web address.
+  - Without the application and without ?state=synced the preview shows "no history synced" (pity 0, no guarantee).
+    Add ?state=synced to the address to preview sample values.
+  - Backgrounds: Genshin uses the supplied Character_Event_Wish_* files (characters) and Epitome_Invocation.webp (weapons);
+    Zenless Zone Zero uses the supplied Base_Background.webp; the Star Rail backgrounds are drawn in CSS.
+  - Optional address parameters: ?state=synced  ?preview=newest  ?now=2026-10-24T12:00:00Z
+-->
+<link rel="stylesheet" href="css/app.css">
+<style id="manual-tweaks">
+  /* Values meant to be edited by hand. */
+  :root {
+    /* Zenless Zone Zero banners: strength of the element effect (glow and stripes) drawn over the base background image.
+       0 = off, 0.5 = half, 1 = full strength. */
+    --zzz-fx-opacity: 1;
+
+    /* Zenless Zone Zero banners with upright character art (a full-body cutout): size and position of the art in the banner.
+       Height as a share of the banner height, top edge as a share of the banner height (negative = starts above it),
+       horizontal center as a share of the banner width. 168% is 50% more than the 112% used up to v15; 50% centers the art.
+       The top edge stays put when the height changes, so a larger art grows downward and the head stays in view. */
+    --zzz-art-height: 168%;
+    --zzz-art-top: -6%;
+    --zzz-art-left: 50%;
+    /* Position of the name plate (its top-left corner) as a distance from the banner's left and top edges, in 1% of the banner width.
+       Under 440 px of banner width the plate sits in the bottom row and these two are ignored. */
+    --zzz-plate-left: 52cqw;
+    --zzz-plate-top: 36cqw;
+
+    /* Honkai: Star Rail character banners: size of the character art, as a multiple of the size before v15 (1 = that size,
+       1.5 = 50% larger). The art is scaled around its center, so it stays where it was. */
+    --hsr-art-scale: 1.9;
+
+    /* Honkai: Star Rail character banners: size of the name plate (name, element icon, black rectangles) and of the stars with their
+       rectangle, as a multiple of the size before v17 (1 = that size, 1.5 = 50% larger). The top-left corner of the plate stays put. */
+    --hsr-plate-scale: 1.5;
+
+    /* Honkai: Star Rail light cone banners: how much the icon is enlarged inside each of the three small cards at the bottom left
+       (1 = the whole square icon, cropped to the card; larger = closer on the picture, so less of the icon's own frame shows). */
+    --hl-mini-zoom: 1.4;
+
+    /* Character + weapon display (a character banner and a weapon banner chosen together): size of the character art as a multiple of its
+       default size (1 = default), horizontal center of the character art (a distance from the banner's left edge, in 1% of the banner width;
+       the character name plate is centered on the same line), and size of the weapon card as a multiple of its default size. */
+    --combo-art-scale: 1;
+    --combo-art-x: 32.5cqw;
+    --combo-card-scale: 1;
+
+    /* Genshin character + weapon display only: size of the weapon art as a multiple of its default size (2 = twice as large; the other games are unchanged). */
+    --combo-genshin-weapon-scale: 2;
+
+    /* Genshin banner font only (Philosopher Bold, a lookalike of the game's font; the other games and the interface are unchanged).
+       Stroke: thickness of the outline added in the text's own color so that the single weight is as heavy as the original (0.03em = 3% of the
+       text's size; 0 = off). Size adjust: x-height as a share of the font size, Philosopher's own is 0.47, so 0.54 makes it about 15% larger,
+       like the original font ("none" = off). */
+    --genshin-stroke: 0.03em;
+    --genshin-size-adjust: 0.54;
+  }
+</style>
+</head>
+<body data-game="genshin">
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<!-- p-* : Phosphor Icons, Fill weight (MIT, licenses/PHOSPHOR-MIT.txt). Sidebar and account glyphs: flat, filled.
+     i-* : Lucide (ISC, licenses/LUCIDE-ISC.txt). Small outline glyphs inside controls. -->
+<symbol id="p-dashboard" viewBox="0 0 256 256"><path d="M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z"/></symbol>
+<symbol id="p-banners" viewBox="0 0 256 256"><path d="M208,32H80A16,16,0,0,0,64,48V64H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V192h16a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM80,48H208v69.38l-16.7-16.7a16,16,0,0,0-22.62,0L93.37,176H80Zm96,160H48V80H64v96a16,16,0,0,0,16,16h96ZM104,88a16,16,0,1,1,16,16A16,16,0,0,1,104,88Z"/></symbol>
+<symbol id="p-history" viewBox="0 0 256 256"><path d="M224,128A96,96,0,0,1,62.11,197.82a8,8,0,1,1,11-11.64A80,80,0,1,0,71.43,71.43C67.9,75,64.58,78.51,61.35,82L77.66,98.34A8,8,0,0,1,72,112H32a8,8,0,0,1-8-8V64a8,8,0,0,1,13.66-5.66L50,70.7c3.22-3.49,6.54-7,10.06-10.55A96,96,0,0,1,224,128ZM128,72a8,8,0,0,0-8,8v48a8,8,0,0,0,3.88,6.86l40,24a8,8,0,1,0,8.24-13.72L136,123.47V80A8,8,0,0,0,128,72Z"/></symbol>
+<symbol id="p-stats" viewBox="0 0 256 256"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16h8V136a8,8,0,0,1,8-8H72a8,8,0,0,1,8,8v64H96V88a8,8,0,0,1,8-8h32a8,8,0,0,1,8,8V200h16V40a8,8,0,0,1,8-8h40a8,8,0,0,1,8,8V200h8A8,8,0,0,1,232,208Z"/></symbol>
+<symbol id="p-sync" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+<symbol id="p-transfer" viewBox="0 0 256 256"><path d="M42.34,85.66a8,8,0,0,1,0-11.32l32-32A8,8,0,0,1,88,48V72H208a8,8,0,0,1,0,16H88v24a8,8,0,0,1-13.66,5.66Zm171.32,84.68-32-32A8,8,0,0,0,168,144v24H48a8,8,0,0,0,0,16H168v24a8,8,0,0,0,13.66,5.66l32-32A8,8,0,0,0,213.66,170.34Z"/></symbol>
+<symbol id="p-data" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+<symbol id="p-settings" viewBox="0 0 256 256"><path d="M237.94,107.21a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A111.92,111.92,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.63a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></symbol>
+<symbol id="p-account" viewBox="0 0 256 256"><path d="M172,120a44,44,0,1,1-44-44A44.05,44.05,0,0,1,172,120Zm60,8A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88.09,88.09,0,0,0-91.47-87.93C77.43,41.89,39.87,81.12,40,128.25a87.65,87.65,0,0,0,22.24,58.16A79.71,79.71,0,0,1,84,165.1a4,4,0,0,1,4.83.32,59.83,59.83,0,0,0,78.28,0,4,4,0,0,1,4.83-.32,79.71,79.71,0,0,1,21.79,21.31A87.62,87.62,0,0,0,216,128Z"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-min" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="hsr-star" viewBox="0 0 16 16"><path d="M8 .4C8.5 4.8 11.2 7.5 15.6 8 11.2 8.5 8.5 11.2 8 15.6 7.5 11.2 4.8 8.5.4 8 4.8 7.5 7.5 4.8 8 .4Z"/></symbol>
+<symbol id="cb-cap" viewBox="0 0 24 40"><path d="M17 5C6 12 6 28 17 35" fill="none" stroke-width="1.5" stroke-linecap="round"/><path d="M22 10C14 16 14 24 22 30" fill="none" stroke-width="1.5" stroke-linecap="round"/></symbol>
+<symbol id="zzz-s" viewBox="0 0 100 100"><defs><linearGradient id="zzzSGrad" x1="0.15" y1="0.05" x2="0.85" y2="0.95"><stop offset="0" stop-color="#ffd83f"/><stop offset="0.55" stop-color="#ffb21c"/><stop offset="1" stop-color="#ff8205"/></linearGradient></defs><polygon points="50.0,3.0 59.0,10.5 70.4,7.7 75.3,18.3 86.7,20.7 86.5,32.4 95.8,39.5 90.5,50.0 95.8,60.5 86.5,67.6 86.7,79.3 75.3,81.7 70.4,92.3 59.0,89.5 50.0,97.0 41.0,89.5 29.6,92.3 24.7,81.7 13.3,79.3 13.5,67.6 4.2,60.5 9.5,50.0 4.2,39.5 13.5,32.4 13.3,20.7 24.7,18.3 29.6,7.7 41.0,10.5" fill="url(#zzzSGrad)" stroke="#0b0b0b" stroke-width="4.5" stroke-linejoin="round"/><text x="50" y="68.5" text-anchor="middle" font-size="62" font-weight="900" font-style="italic" fill="#0b0b0b">S</text></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="topbar">
+  <button class="brand" id="brand" type="button" aria-label="Pulls Tracker, return to the Main screen">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.8 5.5 4.5 9.2 10 10-5.5.8-9.2 4.5-10 10-.8-5.5-4.5-9.2-10-10 5.5-.8 9.2-4.5 10-10z"/></svg>
+    <span class="brand-name">Pulls Tracker</span>
+  </button>
+  <div class="tabs" role="tablist" aria-label="Game">
+    <button class="tab" role="tab" id="tab-genshin" data-game="genshin" aria-selected="true" aria-controls="main" tabindex="0"><span class="tab-full">Genshin Impact</span><span class="tab-short">Genshin</span></button>
+    <button class="tab" role="tab" id="tab-hsr" data-game="hsr" aria-selected="false" aria-controls="main" tabindex="-1"><span class="tab-full">Honkai: Star Rail</span><span class="tab-short">Star Rail</span></button>
+    <button class="tab" role="tab" id="tab-zzz" data-game="zzz" aria-selected="false" aria-controls="main" tabindex="-1"><span class="tab-full">Zenless Zone Zero</span><span class="tab-short">ZZZ</span></button>
+  </div>
+  <!-- Frameless window (pywebview): .drag is a layer under the whole bar (css/app.css) and moves the window when the empty part of the
+       bar is dragged. It is not the parent of the buttons on purpose: pywebview drags for every element inside a drag region.
+       js/window.js adds the minimize and close buttons to the bar and inside each open dialog (a modal dialog blocks everything outside
+       it, so the buttons are repeated there). -->
+  <div class="drag pywebview-drag-region" aria-hidden="true"></div>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <nav aria-label="Screens">
+      <ul class="nav-list">
+        <li><button class="nav-btn" type="button" data-screen="Dashboard"><svg class="glyph" aria-hidden="true"><use href="#p-dashboard"/></svg><span class="nav-label">Dashboard</span></button></li>
+        <li><button class="nav-btn" type="button" data-screen="Banners"><svg class="glyph" aria-hidden="true"><use href="#p-banners"/></svg><span class="nav-label">Banners</span></button></li>
+        <li><button class="nav-btn" type="button" data-screen="History"><svg class="glyph" aria-hidden="true"><use href="#p-history"/></svg><span class="nav-label">History</span></button></li>
+        <li><button class="nav-btn" type="button" data-screen="Stats"><svg class="glyph" aria-hidden="true"><use href="#p-stats"/></svg><span class="nav-label">Stats</span></button></li>
+        <li><button class="nav-btn" type="button" data-screen="Settings"><svg class="glyph" aria-hidden="true"><use href="#p-settings"/></svg><span class="nav-label">Settings</span></button></li>
+      </ul>
+    </nav>
+
+    <div class="account" id="account">
+      <button class="nav-btn" id="accountBtn" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-account"/></svg><span class="nav-label" id="accountLabel">Account</span></button>
+      <button class="nav-btn btn-sync" id="syncBtn" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-sync"/></svg><span class="nav-label">Sync now</span></button>
+    </div>
+  </aside>
+
+  <main id="main" tabindex="-1" aria-labelledby="itemName">
+    <section class="main-col" id="mainCol">
+
+      <div class="banner" id="banner" data-art="art-wide">
+        <div class="stage" id="stage">
+          <div class="stage-layer" id="stageLayer">
+            <img class="stage-bg" id="stageBg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" decoding="async">
+            <div class="hsr-base" id="hsrBase" hidden>
+              <div class="hb-grad" aria-hidden="true"></div>
+              <div class="hb-edge" aria-hidden="true"></div>
+              <div class="hb-panel" aria-hidden="true"><span class="hb-rule"></span><span class="hb-lattice"></span></div>
+              <svg class="hb-bracket" viewBox="0 0 366 480" aria-hidden="true">
+                <path class="hb-bracket-body" d="M64 0H366V472C334 470 312 456 310 424V112C308 78 292 60 250 60H68C38 60 18 36 16 0Z"/>
+                <circle class="hb-dot" cx="315" cy="32" r="7" fill="none" stroke-width="3"/><circle class="hb-dot-fill" cx="337" cy="32" r="9"/>
+                <g class="hb-bars"><path d="M318 145h14v6h-14zM318 155h18v6h-18zM318 165h18v6h-18zM318 175h12v6h-12zM318 185h18v6h-18zM318 195h10v6h-10zM318 205h16v6h-16zM318 215h18v6h-18z"/><path d="M318 247h18v6h-18zM318 257h12v6h-12zM318 267h18v6h-18zM318 277h16v6h-16zM318 287h18v6h-18zM318 297h10v6h-10zM318 307h18v6h-18zM318 317h14v6h-14z"/></g>
+              </svg>
+              <span class="hb-bar" aria-hidden="true"></span>
+              <span class="hb-tab" id="hbTab">Character Event Warp</span>
+              <div class="hb-text">
+                <h2 class="hb-title" id="hbTitle">Current Event Warp</h2>
+                <p class="hb-desc" id="hbDesc"></p>
+              </div>
+            </div>
+            <div class="hsrlc-base" id="hsrLcBase" hidden>
+              <div class="hl-bg" aria-hidden="true"><span class="hb-lattice hl-lattice"></span><span class="hl-ring hl-ring-1"></span><span class="hl-ring hl-ring-2"></span>
+                <span class="hl-stack" id="hlStack"><span class="hl-mini hl-mini-1" data-n="1"><img alt="" referrerpolicy="no-referrer" decoding="async" hidden></span><span class="hl-mini hl-mini-2" data-n="0"><img alt="" referrerpolicy="no-referrer" decoding="async" hidden></span><span class="hl-mini hl-mini-3" data-n="2"><img alt="" referrerpolicy="no-referrer" decoding="async" hidden></span></span></div>
+              <img class="hl-bgart" id="hlBgArt" alt="" referrerpolicy="no-referrer" decoding="async" hidden>
+              <span class="hl-bar" aria-hidden="true"></span>
+              <span class="hl-tab">Light Cone Event Warp</span>
+              <h2 class="hl-title" id="hlTitle" hidden></h2>
+              <div class="hl-glass" aria-hidden="true"></div>
+              <div class="hl-rank" aria-hidden="true"><svg class="hl-stars" viewBox="0 0 66.4 12" aria-hidden="true"><use href="#hsr-star" x="0" width="12" height="12"/><use href="#hsr-star" x="13.6" width="12" height="12"/><use href="#hsr-star" x="27.2" width="12" height="12"/><use href="#hsr-star" x="40.8" width="12" height="12"/><use href="#hsr-star" x="54.4" width="12" height="12"/></svg></div>
+              <div class="hl-sheen" aria-hidden="true"></div>
+            </div>
+            <div class="zzz-base" id="zzzBase" hidden><img class="zb-img" src="assets/zzz/Base_Background.webp" alt="" decoding="async"><div class="zb-fx" aria-hidden="true"></div></div>
+            <img class="stage-art" id="stageArt" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" decoding="async">
+          </div>
+          <div class="combo" id="combo" role="group" aria-label="Character and weapon banners together" hidden>
+            <div class="cb-base" aria-hidden="true"><div class="zzz-base cb-zbase"><img class="zb-img" src="assets/zzz/Base_Background.webp" alt="" decoding="async"><div class="zb-fx"></div></div><span class="cb-glow"></span><span class="cb-ring cb-ring-1"></span><span class="cb-ring cb-ring-2"></span><span class="cb-bar"></span></div>
+            <h2 class="cb-title" aria-hidden="true"><i></i><span id="cbTitle"></span><i></i></h2>
+            <div class="cb-char"><img class="cb-art" id="cbArt" alt="" referrerpolicy="no-referrer" decoding="async"></div>
+            <div class="cb-wpn" aria-hidden="true"><span class="cb-glass"></span><span class="cb-card" id="cbCard"><img id="cbWArt" alt="" referrerpolicy="no-referrer" decoding="async"></span><span class="cb-sheen"></span></div>
+            <div class="cb-plate cb-plate-c" id="cbPlateC">
+              <svg class="cb-zbadge" viewBox="0 0 100 100" aria-hidden="true"><use href="#zzz-s"/></svg>
+              <button class="cb-arrow cb-prev" id="cbCPrev" type="button" aria-label="Previous character banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
+              <span class="cb-tab" aria-hidden="true"><i></i><span class="cb-tab-text" id="cbCTab"></span><i></i></span>
+              <span class="cb-body"><svg class="cb-cap" viewBox="0 0 24 40" aria-hidden="true"><use href="#cb-cap"/></svg><i class="cb-line" aria-hidden="true"></i><strong class="cb-name" id="cbCName"></strong><i class="cb-line" aria-hidden="true"></i><svg class="cb-cap r" viewBox="0 0 24 40" aria-hidden="true"><use href="#cb-cap"/></svg></span>
+              <span class="cb-rank" aria-hidden="true"><img class="cb-el" id="cbCEl" alt="" hidden><span class="cb-stars" id="cbCStars"></span></span>
+              <button class="cb-arrow cb-next" id="cbCNext" type="button" aria-label="Next character banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+            </div>
+            <div class="cb-plate cb-plate-w" id="cbPlateW">
+              <svg class="cb-zbadge" viewBox="0 0 100 100" aria-hidden="true"><use href="#zzz-s"/></svg>
+              <button class="cb-arrow cb-prev" id="cbWPrev" type="button" aria-label="Previous weapon banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
+              <span class="cb-tab" aria-hidden="true"><i></i><span class="cb-tab-text" id="cbWTab"></span><i></i></span>
+              <span class="cb-body"><svg class="cb-cap" viewBox="0 0 24 40" aria-hidden="true"><use href="#cb-cap"/></svg><i class="cb-line" aria-hidden="true"></i><strong class="cb-name" id="cbWName"></strong><i class="cb-line" aria-hidden="true"></i><svg class="cb-cap r" viewBox="0 0 24 40" aria-hidden="true"><use href="#cb-cap"/></svg></span>
+              <span class="cb-rank" aria-hidden="true"><img class="cb-el" id="cbWEl" alt="" hidden><span class="cb-stars" id="cbWStars"></span></span>
+              <button class="cb-arrow cb-next" id="cbWNext" type="button" aria-label="Next weapon banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+            </div>
+            <span class="visually-hidden" id="cbLive" aria-live="polite"></span>
+          </div>
+          <span class="banner-chip" id="bannerChip"></span>
+          <div class="time-chip" id="timeChip">
+            <svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>
+            <span class="time-label" id="timeLabel">Time left</span>
+            <strong class="time-value" id="timeValue">-</strong>
+          </div>
+          <button class="nav-arrow prev" id="prevBtn" type="button" aria-label="Previous banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
+          <button class="nav-arrow next" id="nextBtn" type="button" aria-label="Next banner"><svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+          <span class="pager" id="pager" aria-live="polite"></span>
+        </div>
+
+        <!-- Name plate: floats over the banner art (same construction as the in-game wish banner). -->
+        <div class="identity plate" id="plate">
+          <div class="plate-card">
+            <svg class="zzz-badge" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="zzzBadgeGrad" x1="0.15" y1="0.05" x2="0.85" y2="0.95"><stop offset="0" stop-color="#ffd83f"/><stop offset="0.55" stop-color="#ffb21c"/><stop offset="1" stop-color="#ff8205"/></linearGradient></defs><polygon points="50.0,3.0 59.0,10.5 70.4,7.7 75.3,18.3 86.7,20.7 86.5,32.4 95.8,39.5 90.5,50.0 95.8,60.5 86.5,67.6 86.7,79.3 75.3,81.7 70.4,92.3 59.0,89.5 50.0,97.0 41.0,89.5 29.6,92.3 24.7,81.7 13.3,79.3 13.5,67.6 4.2,60.5 9.5,50.0 4.2,39.5 13.5,32.4 13.3,20.7 24.7,18.3 29.6,7.7 41.0,10.5" fill="url(#zzzBadgeGrad)" stroke="#0b0b0b" stroke-width="4.5" stroke-linejoin="round"/><text x="50" y="68.5" text-anchor="middle" font-size="62" font-weight="900" font-style="italic" fill="#0b0b0b">S</text></svg>
+            <h1 class="item-name" id="itemName"><img class="el-icon" id="elIcon" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""><span id="itemNameText"></span></h1>
+            <img class="stars" id="stars" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
+            <span class="hsr-rank" id="hsrRank" role="img" aria-label="5 stars"><svg class="hsr-stars" viewBox="0 0 66.4 12" aria-hidden="true"><use href="#hsr-star" x="0" width="12" height="12"/><use href="#hsr-star" x="13.6" width="12" height="12"/><use href="#hsr-star" x="27.2" width="12" height="12"/><use href="#hsr-star" x="40.8" width="12" height="12"/><use href="#hsr-star" x="54.4" width="12" height="12"/></svg></span>
+          </div>
+          <div class="desc-wrap" id="descWrap">
+            <p class="desc" id="desc"></p>
+            <button class="more" id="descMore" type="button" aria-expanded="false" hidden>Read more</button>
+          </div>
+        </div>
+        <div class="hsr-flow" id="hsrFlow" hidden>
+          <h2 class="hf-title" id="hfTitle" hidden></h2>
+          <p class="hf-desc" id="hfDesc"></p>
+        </div>
+      </div>
+
+      <div class="info" id="info">
+        <div class="goal">
+          <div class="field">
+            <div class="selects">
+              <div class="sel-field">
+                <label class="phrase" id="phraseC" for="selC">Select your desired constellation tier</label>
+                <div class="select"><select id="selC" aria-label="Character tier"></select><svg class="ico select-chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></div>
+              </div>
+              <div class="sel-field">
+                <label class="phrase" id="phraseW" for="selW">Select your desired weapon rank</label>
+                <div class="select"><select id="selW" aria-label="Weapon rank"></select><svg class="ico select-chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="owned" role="group" aria-labelledby="ownedLabel">
+            <div class="owned-head"><span id="ownedLabel">Currently owned</span><p class="owned-sum" id="ownedSum"></p></div>
+            <div class="owned-fields" id="ownedFields"></div>
+          </div>
+
+          <div class="result" aria-live="polite">
+            <p class="needed" id="needed"></p>
+            <p class="total"><span class="total-label">Pulls needed to guarantee:</span> <strong class="total-num" id="totalNum">0</strong> <span class="total-note">total</span></p>
+          </div>
+        </div>
+
+        <div class="progress">
+          <p class="progress-cap">Progress</p>
+          <div class="ruler" id="ruler" role="img" aria-label=""><span class="ruler-cover"></span><span class="ruler-owned"></span></div>
+          <p class="ruler-legend" aria-hidden="true"><span><i class="k-cover"></i>Pity and guarantee</span><span><i class="k-own"></i>Owned pulls</span><span><i></i>Still needed</span></p>
+          <p class="hint" id="hint"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><span id="hintText"></span></p>
+        </div>
+      </div>
+
+      <div class="empty" id="empty" hidden>
+        <h1 class="empty-title">No current banners in the data</h1>
+        <p>The banner snapshot has no banner running now for this game. The Data sources screen shows when each source last answered.</p>
+      </div>
+
+    </section>
+
+    <!-- Dashboard, Banners, History and Stats: one container, filled by js/views.js -->
+    <section class="view" id="view" hidden></section>
+  </main>
+</div>
+
+<dialog class="modal" id="settingsModal" aria-label="Settings">
+  <div class="modal-body">
+    <div class="modal-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
+      <button class="mtab" role="tab" id="mt-settings" data-tab="settings" aria-controls="mp-settings" aria-selected="true" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-settings"/></svg><span>Settings</span></button>
+      <button class="mtab" role="tab" id="mt-sync" data-tab="sync" aria-controls="mp-sync" aria-selected="false" tabindex="-1" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-sync"/></svg><span>Sync</span></button>
+      <button class="mtab" role="tab" id="mt-transfer" data-tab="transfer" aria-controls="mp-transfer" aria-selected="false" tabindex="-1" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-transfer"/></svg><span>Import / Export</span></button>
+      <button class="mtab" role="tab" id="mt-data" data-tab="data" aria-controls="mp-data" aria-selected="false" tabindex="-1" type="button"><svg class="glyph" aria-hidden="true"><use href="#p-data"/></svg><span>Data sources</span></button>
+    </div>
+
+    <div class="modal-main">
+      <header class="modal-head">
+        <h2 class="modal-title" id="modalTitle">Settings</h2>
+        <button class="modal-close" id="modalClose" type="button" aria-label="Close settings"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </header>
+      <!-- The four panels are filled by js/views.js (Settings, Sync, Import / Export, Data sources). -->
+      <div class="modal-panels">
+        <section class="mpanel" role="tabpanel" id="mp-settings" aria-labelledby="mt-settings" tabindex="0"></section>
+        <section class="mpanel" role="tabpanel" id="mp-sync" aria-labelledby="mt-sync" tabindex="0" hidden></section>
+        <section class="mpanel" role="tabpanel" id="mp-transfer" aria-labelledby="mt-transfer" tabindex="0" hidden></section>
+        <section class="mpanel" role="tabpanel" id="mp-data" aria-labelledby="mt-data" tabindex="0" hidden></section>
+      </div>
+    </div>
+  </div>
+  <div class="toasts" id="modalToasts" role="status" aria-live="polite"></div>
+</dialog>
+
+<!-- One dialog for everything else that pops up: confirmations, errors, the banner detail, the loss pool editor. js/views.js fills it. -->
+<dialog class="modal modal-dlg" id="dlg" aria-labelledby="dlgTitle">
+  <div class="dlg-box">
+    <header class="modal-head">
+      <h2 class="modal-title" id="dlgTitle"></h2>
+      <button class="modal-close" id="dlgClose" type="button" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </header>
+    <div class="dlg-body" id="dlgBody"></div>
+    <footer class="dlg-foot" id="dlgFoot"></footer>
+  </div>
+  <div class="toasts" id="dlgToasts" role="status" aria-live="polite"></div>
+</dialog>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/params.js"></script>
+<script>
+  /* Banner data and art. The application opens this page with #data=<its data folder> once that folder has banner data (written by the
+     load tasks); then both come from there. Otherwise they are the files shipped with the interface (a snapshot). */
+  (function () {
+    var d = window.PT_PARAMS.get('data');
+    /* An address of a folder: file://... (the application sends file:///... with every special character coded; file://server/share for a network folder) or a
+       path relative to this page. Nothing else: a scheme such as https: or an address that starts with // would load banners.js, a script, from another computer.
+       The character test also keeps out a quote or < that would end the tag below. */
+    if (d && !(/^[\w.~%!$&()*+,;=:@/-]+$/.test(d) && (/^file:\/\//i.test(d) || !(/^[A-Za-z][A-Za-z0-9+.-]*:/.test(d) || /^\/\//.test(d))))) d = '';
+    window.PT_DATA_BASE = d ? d.replace(/\/*$/, '/') : '';
+    document.write('<script src="' + window.PT_DATA_BASE + 'js/banners.js"><\/script>');
+  })();
+</script>
+<script src="js/banners-base.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/views.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/window.js"></script>
+</body>
+</html>

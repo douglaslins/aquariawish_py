@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulls Tracker, loading</title>
+<meta name="color-scheme" content="dark">
+<!--
+  LOADING PANEL (frameless window of 803 x 230: a 230 x 230 area on the left and a 573 x 230 banner area on the right).
+  The Python application drives it: PT_LOAD.set({ done, total, fraction, label }), see js/loading.js.
+  Preview in a browser: loading.html?demo=1 (runs through sample steps; ?speed=0.3 is faster).
+  The banner is assets/loading/banner.png (see assets/loading/README.txt).
+-->
+<link rel="stylesheet" href="css/loading.css">
+</head>
+<body>
+<main class="lp pywebview-drag-region" aria-label="Loading Pulls Tracker">
+  <section class="lp-side">
+    <div class="lp-donut" id="lpDonut" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading progress" aria-describedby="lpLabel">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="lp-track" cx="50" cy="50" r="44"/>
+        <circle class="lp-bar" id="lpBar" cx="50" cy="50" r="44" pathLength="100"/>
+      </svg>
+      <span class="lp-pct" id="lpPct">0%</span>
+    </div>
+    <p class="lp-label" id="lpLabel" aria-live="polite">Starting</p>
+  </section>
+  <section class="lp-banner" id="lpBanner" aria-hidden="true"></section>
+</main>
+<script src="js/loading.js"></script>
+</body>
+</html>
