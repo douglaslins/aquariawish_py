@@ -5,20 +5,15 @@
 <h1 align="center">AquariaWish - Pulls Tracker</h1>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/douglaslins/aquariawish_py" alt="license"/></a>
-  <img src="https://img.shields.io/badge/platform-Windows-0078D4?logo=windows&logoColor=white" alt="platform Windows"/>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/github/last-commit/douglaslins/aquariawish_py?logo=github" alt="last commit"/>
-  <a href="https://github.com/douglaslins/aquariawish_py/issues"><img src="https://img.shields.io/github/issues-raw/douglaslins/aquariawish_py?logo=github" alt="open issues"/></a>
-  <a href="https://github.com/douglaslins/aquariawish_py/pulls"><img src="https://img.shields.io/github/issues-pr-raw/douglaslins/aquariawish_py?logo=github" alt="open pull requests"/></a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white" alt="Python 3.9 or newer"/>
-  <img src="https://img.shields.io/badge/built_with-pywebview-blue" alt="built with pywebview"/>
-  <img src="https://img.shields.io/badge/built_with-SQLite-003B57?logo=sqlite&logoColor=white" alt="built with SQLite"/>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/douglaslins/aquariawish_py?style=flat-square" alt="license"/></a>
+  <img src="https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white" alt="platform Windows"/>
+  <img src="https://img.shields.io/badge/python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.9 or newer"/>
+  <img src="https://img.shields.io/badge/built_with-pywebview-blue?style=flat-square" alt="built with pywebview"/>
+  <img src="https://img.shields.io/badge/built_with-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="built with SQLite"/>
+  <br>
+  <a href="https://github.com/douglaslins/aquariawish_py/commits/main"><img src="https://img.shields.io/github/last-commit/douglaslins/aquariawish_py?style=flat-square&logo=github&logoColor=white" alt="last commit"/></a>
+  <a href="https://github.com/douglaslins/aquariawish_py/issues"><img src="https://img.shields.io/github/issues-raw/douglaslins/aquariawish_py?style=flat-square&logo=github&logoColor=white" alt="open issues"/></a>
+  <a href="https://github.com/douglaslins/aquariawish_py/pulls"><img src="https://img.shields.io/github/issues-pr-raw/douglaslins/aquariawish_py?style=flat-square&logo=github&logoColor=white" alt="open pull requests"/></a>
 </p>
 
 <p align="center">
