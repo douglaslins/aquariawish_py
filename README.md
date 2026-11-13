@@ -6,10 +6,19 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/douglaslins/aquariawish_py" alt="license"/></a>
+  <img src="https://img.shields.io/badge/platform-Windows-0078D4?logo=windows&logoColor=white" alt="platform Windows"/>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/douglaslins/aquariawish_py?logo=github" alt="last commit"/>
+  <a href="https://github.com/douglaslins/aquariawish_py/issues"><img src="https://img.shields.io/github/issues-raw/douglaslins/aquariawish_py?logo=github" alt="open issues"/></a>
+  <a href="https://github.com/douglaslins/aquariawish_py/pulls"><img src="https://img.shields.io/github/issues-pr-raw/douglaslins/aquariawish_py?logo=github" alt="open pull requests"/></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white" alt="Python 3.9 or newer"/>
-  <img src="https://img.shields.io/badge/built_with-pywebview-555555" alt="built with pywebview"/>
+  <img src="https://img.shields.io/badge/built_with-pywebview-blue" alt="built with pywebview"/>
   <img src="https://img.shields.io/badge/built_with-SQLite-003B57?logo=sqlite&logoColor=white" alt="built with SQLite"/>
-  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="platform Windows"/>
 </p>
 
 <p align="center">
@@ -35,32 +44,24 @@ Developed with Claude Sonnet 5.5, including this README. UI/UX and the logo bann
 - **Goals.** Calculates the worst-case pulls for a character goal, a weapon goal or both, from pity, guarantee, owned currency and tickets.
 - **Banners.** Shows current, upcoming and past banners with art from third-party services (see [Network access and APIs](#network-access-and-apis)).
 
-<details>
-<summary>More screenshots</summary>
-
-Taken on a fresh install with no account synced, so pity counters are 0.
+Screenshots were taken on a fresh install with no account synced, so pity counters are 0.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/02-main-genshin-combined-goal.png" alt="Main screen with a combined character and weapon goal"/><br/><sub><b>Plan a character and a weapon together.</b> Set both goals to total the pulls for both banners.</sub></td>
-    <td width="50%"><img src="docs/screenshots/03-main-genshin-weapon-goal.png" alt="Main screen with a weapon goal"/><br/><sub><b>Plan a weapon alone.</b> Set the character goal to None.</sub></td>
+    <td width="33%"><img src="docs/screenshots/04-main-star-rail.png" alt="Main screen for Honkai: Star Rail"/><br/><sub><b>Honkai: Star Rail.</b> Eidolon and superimposition goals. Counts Stellar Jade, Oneiric Shards and Special Passes.</sub></td>
+    <td width="33%"><img src="docs/screenshots/05-main-zenless-zone-zero.png" alt="Main screen for Zenless Zone Zero"/><br/><sub><b>Zenless Zone Zero.</b> Mindscape cinema and weapon phase goals. Counts Polychrome and Master Tapes.</sub></td>
+    <td width="33%"><img src="docs/screenshots/06-banners-current.png" alt="Banners screen, Current tab"/><br/><sub><b>Live banners.</b> Featured items, rate-up 4-stars, end time and your pulls on each.</sub></td>
   </tr>
-  <tr>
-    <td><img src="docs/screenshots/04-main-star-rail.png" alt="Main screen for Honkai: Star Rail"/><br/><sub><b>Honkai: Star Rail.</b> Eidolon and superimposition goals. Counts Stellar Jade, Oneiric Shards and Special Passes.</sub></td>
-    <td><img src="docs/screenshots/05-main-zenless-zone-zero.png" alt="Main screen for Zenless Zone Zero"/><br/><sub><b>Zenless Zone Zero.</b> Mindscape cinema and weapon phase goals. Counts Polychrome and Master Tapes.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/06-banners-current.png" alt="Banners screen, Current tab"/><br/><sub><b>Live banners.</b> Featured items, rate-up 4-stars, end time and your pulls on each.</sub></td>
-    <td><img src="docs/screenshots/07-banners-past.png" alt="Banners screen, Past tab"/><br/><sub><b>Past banners.</b> Filter by version and banner type.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/08-settings.png" alt="Settings"/><br/><sub><b>Settings.</b> Games to track, language, time zone, game folders.</sub></td>
-    <td><img src="docs/screenshots/09-sync.png" alt="Sync"/><br/><sub><b>Sync.</b> The link check shows per game whether a saved history link was found.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/10-import-export.png" alt="Import and Export"/><br/><sub><b>Import / Export.</b> UIGF v4.0 JSON or CSV. A preview shows format, game, UID and record count before import.</sub></td>
-    <td><img src="docs/screenshots/11-data-sources.png" alt="Data sources"/><br/><sub><b>Data sources.</b> Status and age of each banner source. Test queries it. Server address replaces it.</sub></td>
-  </tr>
+</table>
+
+<details>
+<summary>More screenshots</summary>
+
+<table>
+  <tr><td width="50%"><img src="docs/screenshots/02-main-genshin-combined-goal.png" alt="Main screen with a combined character and weapon goal"/><br/><sub><b>Plan a character and a weapon together.</b> Set both goals to total the pulls for both banners.</sub></td><td width="50%"><img src="docs/screenshots/03-main-genshin-weapon-goal.png" alt="Main screen with a weapon goal"/><br/><sub><b>Plan a weapon alone.</b> Set the character goal to None.</sub></td></tr>
+  <tr><td width="50%"><img src="docs/screenshots/07-banners-past.png" alt="Banners screen, Past tab"/><br/><sub><b>Past banners.</b> Filter by version and banner type.</sub></td><td width="50%"><img src="docs/screenshots/08-settings.png" alt="Settings"/><br/><sub><b>Settings.</b> Games to track, language, time zone, game folders.</sub></td></tr>
+  <tr><td width="50%"><img src="docs/screenshots/09-sync.png" alt="Sync"/><br/><sub><b>Sync.</b> The link check shows per game whether a saved history link was found.</sub></td><td width="50%"><img src="docs/screenshots/10-import-export.png" alt="Import and Export"/><br/><sub><b>Import / Export.</b> UIGF v4.0 JSON or CSV. A preview shows format, game, UID and record count before import.</sub></td></tr>
+  <tr><td width="50%"><img src="docs/screenshots/11-data-sources.png" alt="Data sources"/><br/><sub><b>Data sources.</b> Status and age of each banner source. Test queries it. Server address replaces it.</sub></td></tr>
 </table>
 
 </details>
