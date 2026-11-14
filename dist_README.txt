@@ -8,7 +8,7 @@ First time: 1. Extract the whole zip into a folder (do not start the program fro
                tick "Unblock" (if that box is there).
             3. An antivirus program may check the first start. The program does not need administrator rights.
 
-License:    LICENSE.txt (MIT) covers the program's own code and its logo banner. THIRD_PARTY_NOTICES.md lists the other software, fonts,
+License:    LICENSE.txt (MIT) covers the program's own code, icon and logo banner. THIRD_PARTY_NOTICES.md lists the other software, fonts,
             icons and data in this folder, with their licenses.
 Game content: Game content and materials are trademarks and copyrights of their respective publisher and its licensors. Genshin Impact,
             Honkai: Star Rail and Zenless Zone Zero: (c) All rights reserved by miHoYo. (c) COGNOSPHERE. All rights reserved. "HoYoverse" is a

@@ -147,8 +147,8 @@ python -m unittest discover -s tests
 
 ## License and legal
 
-- The program's code, documentation and logo banner (drawn by hand) are under the [MIT License](LICENSE). Third-party software, fonts, icons and data keep their licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The program's code, documentation, icon and logo banner (drawn by hand) are under the [MIT License](LICENSE). Third-party software, fonts, icons and data keep their licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Game content and materials are trademarks and copyrights of their respective publisher and its licensors. Genshin Impact, Honkai: Star Rail and Zenless Zone Zero: © All rights reserved by miHoYo. © COGNOSPHERE. All rights reserved. "HoYoverse" is a trademark of COGNOSPHERE PTE. LTD.
 - Other properties and any right, title, and interest thereof and therein (intellectual property rights included) not derived from these games belong to their respective owners.
-- As fan wikis do, the project claims no license for the game images, including those in the screenshots. It asserts fair use or the equivalent exception under applicable law. HoYoverse has not licensed or approved this. To have a file removed, open an issue.
+- As fan wikis do, the project claims no license for the game images, including those in the screenshots. It asserts fair use or the equivalent exception under applicable law. HoYoverse has not licensed or approved this.
 - Not affiliated with or endorsed by HoYoverse. The author understands that a program with no in-game advantage is within HoYoverse's rules on third-party tools. HoYoverse has not confirmed this. Use it at your own risk.

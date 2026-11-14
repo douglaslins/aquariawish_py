@@ -26,7 +26,7 @@
 | `pulls_tracker.spec`, `build_exe.bat`, `build_exe.sh`, `requirements-build.txt`, `dist_README.txt` | the PyInstaller build (see Packaging) |
 | `.gitignore` | keeps `data/` (your pulls and UID), `dist/`, `build/`, `.venv-build/`, caches and logs out of the repository |
 | `LICENSE`, `THIRD_PARTY_NOTICES.md` | the MIT License of the program's own code, and the notices and license texts of the third-party software, fonts, icons and data. The build scripts copy both next to `AquariaWish.exe` |
-| `pulls_tracker_ui/fonts/`, `pulls_tracker_ui/licenses/` | the fonts (SIL Open Font License 1.1) and the icon license texts. Each font has its license text beside it |
+| `pulls_tracker_ui/fonts/`, `pulls_tracker_ui/licenses/` | the fonts (SIL Open Font License 1.1) with their license texts (the Philosopher text is in `licenses/`), and the icon license texts |
 | `pulls_tracker_ui/` | the interface (HTML, CSS, JS); see its README |
 | `banner_tracker_test.py` | banner fetcher that writes `pulls_tracker_ui/js/banners.js` and the art |
 | `tests/` | tests of the window, loader, database, sync, accounts and backups, no screen needed: `python -m unittest discover -s tests` |
